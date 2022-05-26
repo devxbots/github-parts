@@ -1,0 +1,24 @@
+[package]
+name = "github-parts"
+version = "0.1.0"
+edition = "2021"
+
+description = "Types and actions to interact with GitHub"
+repository = "https://github.com/devxbots/github-parts"
+
+categories = [
+    "development-tools"
+]
+keywords = [
+    "github",
+    "github-app",
+]
+
+# github-parts is currently in a prototyping phase, during which we won't
+# release it publicly.
+publish = false
+
+# See more keys and their definitions at
+# https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
