@@ -8,4 +8,5 @@
 
 #![warn(missing_docs)]
 
+pub mod account;
 pub mod event;
