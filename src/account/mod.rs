@@ -6,6 +6,7 @@
 
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 pub use self::account_id::AccountId;
 pub use self::account_type::AccountType;
@@ -38,9 +39,27 @@ pub struct Account {
     account_type: AccountType,
 }
 
+impl Account {
+    /// Initializes a new account.
+    pub fn new(login: Login, id: AccountId, account_type: AccountType) -> Self {
+        Self {
+            login,
+            id,
+            account_type,
+        }
+    }
+}
+
+impl Display for Account {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.login.get())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Account, AccountType};
+    use crate::account::{AccountId, Login};
 
     #[test]
     fn trait_deserialize() {
@@ -72,6 +91,17 @@ mod tests {
         assert_eq!(1, account.id().get());
         assert_eq!("octocat", account.login().get());
         assert!(matches!(account.account_type(), AccountType::User));
+    }
+
+    #[test]
+    fn trait_display() {
+        let account = Account::new(
+            Login::new("devxbots"),
+            AccountId::new(104442885),
+            AccountType::Organization,
+        );
+
+        assert_eq!("devxbots", account.to_string());
     }
 
     #[test]
