@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// When a check run finishes, its result is indicated by the `conclusion`.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CheckRunConclusion {
     /// The check run finished successfully.
     Success,
