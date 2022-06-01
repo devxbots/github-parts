@@ -9,6 +9,7 @@
 #![warn(missing_docs)]
 
 pub mod account;
+pub mod check_run;
 pub mod event;
 pub mod repository;
 pub mod visibility;
