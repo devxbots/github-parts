@@ -71,7 +71,12 @@ impl Repository {
     /// name. This combination can be used to uniquely identify a repository on GitHub, and is thus
     /// often used to reference them externally.
     pub fn full_name(&self) -> String {
-        format!("{}/{}", self.owner.login(), self.name())
+        let login = match &self.owner {
+            Account::Organization(org) => org.login(),
+            Account::User(user) => user.login(),
+        };
+
+        format!("{}/{}", login, self.name())
     }
 }
 
@@ -83,7 +88,7 @@ impl Display for Repository {
 
 #[cfg(test)]
 mod tests {
-    use crate::account::{Account, AccountId, AccountType, Login};
+    use crate::account::{Account, AccountId, Login, Organization};
     use crate::repository::{RepositoryId, RepositoryName};
     use crate::visibility::Visibility;
 
@@ -94,11 +99,10 @@ mod tests {
             RepositoryId::new(496534847),
             RepositoryName::new("github-parts"),
             Some("🔩 Types and actions to interact with GitHub".into()),
-            Account::new(
+            Account::Organization(Organization::new(
                 Login::new("devxbots"),
                 AccountId::new(104442885),
-                AccountType::Organization,
-            ),
+            )),
             Visibility::Public,
         )
     }

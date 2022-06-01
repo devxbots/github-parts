@@ -6,7 +6,7 @@
 use getset::Getters;
 use serde::{Deserialize, Serialize};
 
-use crate::account::Account;
+use crate::account::{Account, Organization};
 use crate::check_run::CheckRun;
 use crate::installation::Installation;
 use crate::repository::Repository;
@@ -56,7 +56,7 @@ pub struct CheckRunEvent {
     /// Webhook payloads contain the `organization` object when the webhook is configured for an
     /// organization or the event occurs from activity in a repository owned by an organization.
     #[getset(get = "pub")]
-    organization: Option<Account>,
+    organization: Option<Organization>,
 
     /// The GitHub App installation. Webhook payloads contain the `installation` property when the
     /// event is configured for and sent to a GitHub App.
@@ -74,7 +74,7 @@ impl CheckRunEvent {
         action: Action,
         check_run: CheckRun,
         repository: Repository,
-        organization: Option<Account>,
+        organization: Option<Organization>,
         installation: Option<Installation>,
         sender: Account,
     ) -> Self {
