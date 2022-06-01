@@ -1,39 +1,49 @@
-//! GitHub account
+//! GitHub user
 //!
-//! Repositories hosted on GitHub belong to an account, which can be either an organization or a
-//! user. Accounts have various unique properties such as a `login` and an `id` that are used to
-//! identify and interact with them.
+//! Users have various unique properties such as a `login` and an `id` that are used to identify and
+//! interact with them.
 
+use std::fmt::{Display, Formatter};
+
+use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
-pub use self::account_id::AccountId;
-pub use self::login::Login;
-pub use self::organization::Organization;
-pub use self::user::User;
+use crate::account::{AccountId, Login};
 
-mod account_id;
-mod login;
-mod organization;
-mod user;
-
-/// GitHub account
+/// GitHub user
 ///
-/// An account on GitHub can represent either an organization or a user. Accounts have a unique `id`
-/// that is used throughout GitHub's REST API to identify accounts. They also have a `login`, which
-/// is a human-readable name that must be unique, but can be changed by the owner.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-#[serde(tag = "type")]
-pub enum Account {
-    /// An organization
-    Organization(Organization),
+/// Users on GitHub have a unique `id` that is used throughout GitHub's REST API to identify users.
+/// They also have a `login`, which is a human-readable name that must be unique, but can be changed
+/// by the owner.
+#[derive(
+    Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters, Getters,
+)]
+pub struct User {
+    /// Returns the login of the user.
+    #[getset(get = "pub")]
+    login: Login,
 
-    /// A user
-    User(User),
+    /// Returns the id of the user.
+    #[getset(get_copy = "pub")]
+    id: AccountId,
+}
+
+impl User {
+    /// Initializes a new user.
+    pub fn new(login: Login, id: AccountId) -> Self {
+        Self { login, id }
+    }
+}
+
+impl Display for User {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.login.get())
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Account;
+    use super::User;
 
     #[test]
     fn trait_deserialize() {
@@ -60,19 +70,21 @@ mod tests {
         }
         "#;
 
-        let account: Account = serde_json::from_str(json).unwrap();
-        assert!(matches!(account, Account::User(_)));
+        let user: User = serde_json::from_str(json).unwrap();
+
+        assert_eq!(1, user.id().get());
+        assert_eq!("octocat", user.login().get());
     }
 
     #[test]
     fn trait_send() {
         fn assert_send<T: Send>() {}
-        assert_send::<Account>();
+        assert_send::<User>();
     }
 
     #[test]
     fn trait_sync() {
         fn assert_sync<T: Sync>() {}
-        assert_sync::<Account>();
+        assert_sync::<User>();
     }
 }
