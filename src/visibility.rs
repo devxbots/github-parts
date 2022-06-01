@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 /// Private resources are only accessible to the owner, team members, or collaborators. Public
 /// resources can be seen by anyone.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Visibility {
     /// Only visible to the owner, team members, and collaborators
     Private,

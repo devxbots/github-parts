@@ -10,6 +10,10 @@ use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
 
+pub use self::check_run::CheckRunEvent;
+
+mod check_run;
+
 /// Webhook event
 ///
 /// GitHub provides a wide variety of events, which enable integrations to react to almost any
@@ -23,6 +27,11 @@ use serde::{Deserialize, Serialize};
 /// Read more: <https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads>
 #[derive(Clone, Eq, PartialEq, Debug, Deserialize, Serialize)]
 pub enum Event {
+    /// Check run activity has occurred.
+    ///
+    /// The type of activity is specified in the `action` property of the payload object.
+    CheckRun(Box<CheckRunEvent>),
+
     /// Unsupported event
     ///
     /// This event is not yet supported by [`github-parts`], but the webhook payload is passed
@@ -33,6 +42,7 @@ pub enum Event {
 impl Display for Event {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let string = match self {
+            Event::CheckRun(_) => "check run",
             Event::Unsupported(_) => "unsupported event",
         };
 

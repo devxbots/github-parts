@@ -36,7 +36,7 @@ pub struct Repository {
 
     /// Returns the description of the repository.
     #[getset(get = "pub")]
-    description: String,
+    description: Option<String>,
 
     /// Returns the owner of the repository.
     #[getset(get = "pub")]
@@ -52,7 +52,7 @@ impl Repository {
     pub fn new(
         id: RepositoryId,
         name: RepositoryName,
-        description: String,
+        description: Option<String>,
         owner: Account,
         visibility: Visibility,
     ) -> Self {
@@ -93,7 +93,7 @@ mod tests {
         Repository::new(
             RepositoryId::new(496534847),
             RepositoryName::new("github-parts"),
-            "🔩 Types and actions to interact with GitHub".into(),
+            Some("🔩 Types and actions to interact with GitHub".into()),
             Account::new(
                 Login::new("devxbots"),
                 AccountId::new(104442885),

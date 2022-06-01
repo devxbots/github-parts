@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 /// Check runs have a status, which indicates whether the check run has already started, is
 /// currently running, or has finished.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CheckRunStatus {
     /// The check run has been queued, but not started yet.
     Queued,
