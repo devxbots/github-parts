@@ -11,5 +11,6 @@
 pub mod account;
 pub mod check_run;
 pub mod event;
+pub mod installation;
 pub mod repository;
 pub mod visibility;
