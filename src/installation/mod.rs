@@ -7,9 +7,7 @@ use std::fmt::{Display, Formatter};
 use getset::CopyGetters;
 use serde::{Deserialize, Serialize};
 
-pub use self::installation_id::InstallationId;
-
-mod installation_id;
+id!(InstallationId);
 
 /// Installation
 ///
@@ -40,9 +38,7 @@ impl Display for Installation {
 
 #[cfg(test)]
 mod tests {
-    use crate::installation::InstallationId;
-
-    use super::Installation;
+    use super::{Installation, InstallationId};
 
     #[test]
     fn trait_display() {

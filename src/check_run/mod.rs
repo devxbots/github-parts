@@ -3,18 +3,20 @@
 //! When code is pushed to GitHub, apps and integrations can start check runs to perform arbitrary
 //! tasks, e.g. run tests or perform static analysis.
 
+use std::fmt::{Display, Formatter};
+
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
 pub use self::check_run_conclusion::CheckRunConclusion;
-pub use self::check_run_id::CheckRunId;
 pub use self::check_run_name::CheckRunName;
 pub use self::check_run_status::CheckRunStatus;
 
 mod check_run_conclusion;
-mod check_run_id;
 mod check_run_name;
 mod check_run_status;
+
+id!(CheckRunId);
 
 /// Check run
 ///
