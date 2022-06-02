@@ -4,17 +4,19 @@
 //! user. Accounts have various unique properties such as a `login` and an `id` that are used to
 //! identify and interact with them.
 
+use std::fmt::{Display, Formatter};
+
 use serde::{Deserialize, Serialize};
 
-pub use self::account_id::AccountId;
 pub use self::login::Login;
 pub use self::organization::Organization;
 pub use self::user::User;
 
-mod account_id;
 mod login;
 mod organization;
 mod user;
+
+id!(AccountId);
 
 /// GitHub account
 ///
