@@ -41,6 +41,7 @@ macro_rules! id {
 
 pub mod account;
 pub mod check_run;
+pub mod error;
 pub mod event;
 pub mod github;
 pub mod installation;
