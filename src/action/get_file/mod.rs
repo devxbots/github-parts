@@ -5,6 +5,7 @@ use std::path::Path;
 use reqwest::Client;
 
 use crate::account::Login;
+use crate::action::get_file::payload::GetFileResponse;
 use crate::github::token::{AppToken, InstallationToken};
 use crate::github::{AppId, GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
@@ -42,7 +43,7 @@ pub async fn get_file(
     let app_token = AppToken::new(app_id, private_key)?;
     let installation_token = InstallationToken::new(github_host, &app_token, installation).await?;
 
-    let body = Client::new()
+    let response = Client::new()
         .get(url)
         .header(
             "Authorization",
@@ -52,8 +53,14 @@ pub async fn get_file(
         .header("User-Agent", "devxbots/github-parts")
         .send()
         .await?
-        .json::<serde_json::Value>()
+        .json::<GetFileResponse>()
         .await?;
+
+    // TODO: Handle error properly instead of just defaulting to a NOT FOUND
+    let body = match response {
+        GetFileResponse::Success(body) => body,
+        GetFileResponse::Error(_) => return Err(GetFileError::NotFound),
+    };
 
     if body.is_array() {
         Err(GetFileError::Directory)
@@ -264,5 +271,35 @@ mod tests {
         .unwrap_err();
 
         assert!(matches!(error, GetFileError::Submodule));
+    }
+
+    #[tokio::test]
+    async fn get_file_not_found() {
+        let _token_mock = mock("POST", "/app/installations/1/access_tokens")
+            .with_status(200)
+            .with_body(r#"{ "token": "ghs_16C7e42F292c6912E7710c838347Ae178B4a" }"#)
+            .create();
+        let _content_mock = mock("GET", "/repos/devxbots/github-parts/contents/foo")
+            .with_status(404)
+            .with_body(r#"
+                {
+                    "message": "Not Found",
+                    "documentation_url": "https://docs.github.com/rest/reference/repos#get-repository-content"
+                }
+            "#).create();
+
+        let error = get_file(
+            &GitHubHost::new(mockito::server_url()),
+            &AppId::new(1),
+            &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
+            &InstallationId::new(1),
+            &Login::new("devxbots"),
+            &RepositoryName::new("github-parts"),
+            PathBuf::from("foo").as_path(),
+        )
+        .await
+        .unwrap_err();
+
+        assert!(matches!(error, GetFileError::NotFound));
     }
 }

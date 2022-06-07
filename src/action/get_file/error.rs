@@ -26,6 +26,10 @@ pub enum GetFileError {
     #[error("encoding {0} is not supported")]
     Encoding(String),
 
+    /// The file was not found
+    #[error("file not found")]
+    NotFound,
+
     /// The outgoing request to GitHub failed
     #[error("querying the content failed. {0}")]
     Request(#[from] reqwest::Error),

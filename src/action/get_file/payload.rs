@@ -1,7 +1,15 @@
 use base64::decode;
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::action::get_file::{GetFileError, GetFileResult};
+
+#[derive(Clone, Eq, PartialEq, Debug, Deserialize)]
+#[serde(untagged)]
+pub enum GetFileResponse {
+    Error(GetFileErrorPayload),
+    Success(Value),
+}
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "type")]
@@ -26,6 +34,11 @@ pub struct FilePayload {
 #[serde(rename_all = "snake_case")]
 pub enum FileEncoding {
     Base64,
+}
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize)]
+pub struct GetFileErrorPayload {
+    message: String,
 }
 
 impl TryFrom<GetFilePayload> for GetFileResult {
@@ -54,8 +67,9 @@ impl TryFrom<GetFilePayload> for GetFileResult {
 
 #[cfg(test)]
 mod tests {
-    use super::{FileEncoding, FilePayload, GetFilePayload};
     use crate::action::get_file::GetFileResult;
+
+    use super::{FileEncoding, FilePayload, GetFilePayload};
 
     const PAYLOAD: &str = r#"
         {
