@@ -40,6 +40,7 @@ macro_rules! id {
 }
 
 pub mod account;
+pub mod action;
 pub mod check_run;
 pub mod error;
 pub mod event;

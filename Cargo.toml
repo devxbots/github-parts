@@ -23,6 +23,7 @@ publish = false
 # https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+base64 = "0.13.0"
 chrono = "0.4.19"
 getset = "0.1.2"
 jsonwebtoken = "8.1.0"
@@ -34,4 +35,4 @@ thiserror = "1.0.31"
 
 [dev-dependencies]
 mockito = "0.31.0"
-tokio = { version = "1.19.2", features = ["macros", "rt"] }
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }

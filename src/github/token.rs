@@ -95,7 +95,7 @@ impl InstallationToken {
     pub async fn new(
         endpoint: &GitHubHost,
         app_token: &AppToken,
-        installation: InstallationId,
+        installation: &InstallationId,
     ) -> Result<InstallationToken, Error> {
         let url = format!(
             "{}/app/installations/{}/access_tokens",
@@ -167,7 +167,7 @@ mod tests {
         let installation_id = InstallationId::new(1);
 
         let installation_token =
-            InstallationToken::new(&github_host, &app_token, installation_id).await;
+            InstallationToken::new(&github_host, &app_token, &installation_id).await;
 
         assert!(installation_token.is_ok());
         Ok(())
