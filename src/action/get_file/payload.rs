@@ -1,3 +1,4 @@
+use anyhow::Context;
 use base64::decode;
 use serde::Deserialize;
 use serde_json::Value;
@@ -53,7 +54,8 @@ impl TryFrom<GetFilePayload> for GetFileResult {
         }?;
 
         let sanitized_content = &payload.content.replace('\n', "");
-        let content = decode(sanitized_content)?;
+        let content =
+            decode(sanitized_content).context("failed to decode Base64 encoded file content")?;
 
         Ok(GetFileResult {
             size: payload.size,

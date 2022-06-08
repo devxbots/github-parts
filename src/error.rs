@@ -1,26 +1,24 @@
 //! Internal errors
 
-use thiserror::Error as ThisError;
-
 /// Errors that can occur inside github-parts
 ///
 /// github-parts interacts with external resources, for example GitHub's API, which always has a
 /// chance of failing due to a variety of reasons. The different errors that can occur are
 /// represented by this struct. Consumers of the crate can decide if they want to rethrow an error
 /// or retry an operation.
-#[derive(Debug, ThisError)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    /// Authenticating with GitHub failed
-    #[error("authentication failed with the following error: {0}")]
-    Authentication(#[from] jsonwebtoken::errors::Error),
-
-    /// An operation inside the crate failed
-    #[error("{0}")]
-    Internal(String),
+    /// The configuration of the crate is invalid or caused an error
+    #[error("{1}")]
+    Configuration(#[source] Box<dyn std::error::Error + Send + Sync>, String),
 
     /// Accessing external resources failed
-    #[error("an outgoing request failed with the following error: {0}")]
-    Request(#[from] reqwest::Error),
+    #[error(transparent)]
+    ExternalResource(#[from] reqwest::Error),
+
+    /// An operation inside the crate failed
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
 }
 
 #[cfg(test)]

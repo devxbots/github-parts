@@ -1,7 +1,6 @@
 //! Get a file from a repository on GitHub
 
-use std::path::Path;
-
+use anyhow::Context;
 use reqwest::Client;
 
 use crate::account::Login;
@@ -29,19 +28,21 @@ pub async fn get_file(
     installation: &InstallationId,
     owner: &Login,
     repository: &RepositoryName,
-    path: &Path,
+    path: &str,
 ) -> Result<GetFileResult, GetFileError> {
     let url = format!(
         "{}/repos/{}/{}/contents/{}",
         github_host.get(),
         owner.get(),
         repository.get(),
-        path.to_str()
-            .ok_or_else(|| GetFileError::Argument("failed to convert path to string".into()))?
+        path
     );
 
-    let app_token = AppToken::new(app_id, private_key)?;
-    let installation_token = InstallationToken::new(github_host, &app_token, installation).await?;
+    let app_token =
+        AppToken::new(app_id, private_key).context("failed to create GitHub App token")?;
+    let installation_token = InstallationToken::new(github_host, &app_token, installation)
+        .await
+        .context("failed to create GitHub installation token")?;
 
     let response = Client::new()
         .get(url)
@@ -52,9 +53,11 @@ pub async fn get_file(
         .header("Accept", "application/vnd.github.v3+json")
         .header("User-Agent", "devxbots/github-parts")
         .send()
-        .await?
+        .await
+        .context("failed to query GitHub's content API")?
         .json::<GetFileResponse>()
-        .await?;
+        .await
+        .context("failed to deserialize response from GitHub's content API")?;
 
     // TODO: Handle error properly instead of just defaulting to a NOT FOUND
     let body = match response {
@@ -65,15 +68,15 @@ pub async fn get_file(
     if body.is_array() {
         Err(GetFileError::Directory)
     } else {
-        let payload: GetFilePayload = serde_json::from_value(body)?;
+        let payload: GetFilePayload = serde_json::from_value(body)
+            .context("failed to deserialize payload from GitHub's content API")?;
+
         GetFileResult::try_from(payload)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
     use mockito::mock;
 
     use crate::account::Login;
@@ -118,7 +121,7 @@ mod tests {
             &InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
-            PathBuf::from("README.md").as_path(),
+            "README.md",
         )
         .await
         .unwrap();
@@ -179,7 +182,7 @@ mod tests {
             &InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
-            PathBuf::from("lib/octokit").as_path(),
+            "lib/octokit",
         )
         .await
         .unwrap_err();
@@ -222,7 +225,7 @@ mod tests {
             &InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
-            PathBuf::from("bin/some-symlink").as_path(),
+            "bin/some-symlink",
         )
         .await
         .unwrap_err();
@@ -265,7 +268,7 @@ mod tests {
             &InstallationId::new(1),
             &Login::new("jquery"),
             &RepositoryName::new("jquery"),
-            PathBuf::from("test/qunit").as_path(),
+            "test/qunit",
         )
         .await
         .unwrap_err();
@@ -295,7 +298,7 @@ mod tests {
             &InstallationId::new(1),
             &Login::new("devxbots"),
             &RepositoryName::new("github-parts"),
-            PathBuf::from("foo").as_path(),
+            "foo",
         )
         .await
         .unwrap_err();

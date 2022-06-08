@@ -23,6 +23,7 @@ publish = false
 # https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.57"
 base64 = "0.13.0"
 chrono = "0.4.19"
 getset = "0.1.2"

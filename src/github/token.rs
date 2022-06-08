@@ -4,6 +4,7 @@
 //! default, but can also authenticate as an installation. Both scopes have their own `Token`, and
 //! actions can declare which one they need through Rust's type system.
 
+use anyhow::Context;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use reqwest::Client;
@@ -59,11 +60,11 @@ impl AppToken {
 
         let issued_at = now
             .checked_sub_signed(Duration::seconds(60))
-            .ok_or_else(|| Error::Internal("failed to create timestamp for iat claim".into()))?;
+            .context("failed to create timestamp for iat claimn in GitHub App token")?;
 
         let expires_at = now
             .checked_add_signed(Duration::minutes(10))
-            .ok_or_else(|| Error::Internal("failed to create timestamp for exp claim".into()))?;
+            .context("failed to create timestamp for exp claim in GitHub App token")?;
 
         let claims = Claims {
             iat: issued_at.timestamp(),
@@ -72,9 +73,15 @@ impl AppToken {
         };
 
         let header = Header::new(Algorithm::RS256);
-        let key = EncodingKey::from_rsa_pem(private_key.get().as_bytes())?;
+        let key = EncodingKey::from_rsa_pem(private_key.get().as_bytes()).map_err(|error| {
+            Error::Configuration(
+                Box::new(error),
+                "failed to create encoding key for GitHub App token".into(),
+            )
+        })?;
 
-        let jwt = encode(&header, &claims, &key)?;
+        let jwt =
+            encode(&header, &claims, &key).context("failed to encode JWT for GitHub App token")?;
 
         Ok(Self(SecretString::new(jwt)))
     }
@@ -124,6 +131,7 @@ impl InstallationToken {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Context;
     use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
     use mockito::mock;
 
@@ -144,7 +152,8 @@ mod tests {
             app_token.get(),
             &DecodingKey::from_rsa_pem(
                 include_str!("../../tests/fixtures/public-key.pem").as_bytes(),
-            )?,
+            )
+            .context("failed to create decoding key from public key")?,
             &Validation::new(Algorithm::RS256),
         );
 
