@@ -1,13 +1,18 @@
 //! Entities to interact with GitHub
 
-pub use self::app_id::AppId;
-pub use self::github_host::GitHubHost;
+use std::fmt::{Display, Formatter};
+
+use serde::{Deserialize, Serialize};
+
+use crate::{id, name};
+
 pub use self::private_key::PrivateKey;
 pub use self::webhook_secret::WebhookSecret;
 
-mod app_id;
-mod github_host;
 mod private_key;
 mod webhook_secret;
+
+id!(AppId);
+name!(GitHubHost);
 
 pub mod token;

@@ -8,15 +8,16 @@ use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
 
-pub use self::login::Login;
+use crate::{id, name};
+
 pub use self::organization::Organization;
 pub use self::user::User;
 
-mod login;
 mod organization;
 mod user;
 
 id!(AccountId);
+name!(Login);
 
 /// GitHub account
 ///

@@ -10,12 +10,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::account::Account;
 use crate::visibility::Visibility;
-
-pub use self::repository_name::RepositoryName;
-
-mod repository_name;
+use crate::{id, name};
 
 id!(RepositoryId);
+name!(RepositoryName);
 
 /// Repository
 ///
