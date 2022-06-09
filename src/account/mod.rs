@@ -1,9 +1,3 @@
-//! GitHub account
-//!
-//! Repositories hosted on GitHub belong to an account, which can be either an organization or a
-//! user. Accounts have various unique properties such as a `login` and an `id` that are used to
-//! identify and interact with them.
-
 use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
@@ -19,18 +13,10 @@ mod user;
 id!(AccountId);
 name!(Login);
 
-/// GitHub account
-///
-/// An account on GitHub can represent either an organization or a user. Accounts have a unique `id`
-/// that is used throughout GitHub's REST API to identify accounts. They also have a `login`, which
-/// is a human-readable name that must be unique, but can be changed by the owner.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum Account {
-    /// An organization
     Organization(Organization),
-
-    /// A user
     User(User),
 }
 

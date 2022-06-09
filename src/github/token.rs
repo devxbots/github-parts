@@ -1,9 +1,3 @@
-//! Authentication tokens for GitHub
-//!
-//! github-parts interacts with GitHub through its REST API. It authenticates as a GitHub App by
-//! default, but can also authenticate as an installation. Both scopes have their own `Token`, and
-//! actions can declare which one they need through Rust's type system.
-
 use anyhow::Context;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
@@ -15,24 +9,9 @@ use crate::error::Error;
 use crate::github::{AppId, GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 
-/// Authentication token for GitHub App
-///
-/// github-parts interacts with GitHub through its REST API and uses authentication tokens to
-/// identify itself. The `AppToken` represents the GitHub App itself, and can be used to interact
-/// with GitHub's API on behalf of the app.
-///
-/// https://docs.github.com/en/developers/apps/authenticating-with-github-apps
 #[derive(Clone, Debug)]
 pub struct AppToken(SecretString);
 
-/// Authentication token for installations
-///
-/// github-parts interacts with GitHub through its REST API and uses authentication tokens to
-/// identify itself. The `InstallationToken` represents the installation of the GitHub App in a
-/// specific account, and can be used to interact with the resources of this particular
-/// installation.
-///
-/// https://docs.github.com/en/developers/apps/authenticating-with-github-apps
 #[derive(Clone, Debug)]
 pub struct InstallationToken(SecretString);
 
@@ -49,12 +28,6 @@ struct AccessTokensResponse {
 }
 
 impl AppToken {
-    /// Create a new app token
-    ///
-    /// The app token can be used to request resources on behalf of the GitHub App. It is created by
-    /// initializing a JSON Web Token and signing it with the app's private key.
-    ///
-    /// https://jwt.io/
     pub fn new(app_id: &AppId, private_key: &PrivateKey) -> Result<Self, Error> {
         let now = Utc::now();
 
@@ -86,19 +59,12 @@ impl AppToken {
         Ok(Self(SecretString::new(jwt)))
     }
 
-    /// Get the token
     pub fn get(&self) -> &str {
         self.0.expose_secret()
     }
 }
 
 impl InstallationToken {
-    /// Request a new installation token
-    ///
-    /// The installation token can be used to request resources on behalf of the installation. The
-    /// token is created by requesting it from GitHub using the app token.
-    ///
-    /// https://docs.github.com/en/developers/apps/authenticating-with-github-apps
     pub async fn new(
         endpoint: &GitHubHost,
         app_token: &AppToken,
@@ -123,7 +89,6 @@ impl InstallationToken {
         Ok(Self(SecretString::new(access_token_response.token)))
     }
 
-    /// Get the token
     pub fn get(&self) -> &str {
         self.0.expose_secret()
     }

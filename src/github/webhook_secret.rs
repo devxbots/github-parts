@@ -1,19 +1,13 @@
 use secrecy::{ExposeSecret, SecretString};
 
-/// Webhook secret
-///
-/// GitHub adds a cryptographic signature based on a shared secret to its webhooks. The signature
-/// can be used to verify that the webhook was sent by GitHub and not a malicious party.
 #[derive(Clone, Debug)]
 pub struct WebhookSecret(SecretString);
 
 impl WebhookSecret {
-    /// Initializes a new webhook secret.
     pub fn new(webhook_secret: String) -> Self {
         Self(SecretString::new(webhook_secret))
     }
 
-    /// Returns the webhook secret.
     pub fn get(&self) -> &str {
         self.0.expose_secret()
     }

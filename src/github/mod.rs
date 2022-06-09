@@ -1,5 +1,3 @@
-//! Entities to interact with GitHub
-
 use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};

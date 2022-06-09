@@ -1,7 +1,3 @@
-//! Installation
-//!
-//! When a GitHub App is added to a repository, it's called an installation.
-
 use std::fmt::{Display, Formatter};
 
 use getset::CopyGetters;
@@ -11,22 +7,15 @@ use crate::id;
 
 id!(InstallationId);
 
-/// Installation
-///
-/// When a GitHub App is added to a repository, it's called an installation. Each installation has a
-/// unique `id` that can be used by the GitHub App to authenticate and interact with a specific
-/// repository.
 #[derive(
     Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters,
 )]
 pub struct Installation {
-    /// Returns the installation id.
     #[getset(get_copy = "pub")]
     id: InstallationId,
 }
 
 impl Installation {
-    /// Initializes a new installation.
     pub fn new(id: InstallationId) -> Self {
         Self { id }
     }

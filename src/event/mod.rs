@@ -1,11 +1,3 @@
-//! Webhook events
-//!
-//! GitHub enables integrations to subscribe to events. Whenever such an event happens on GitHub, a
-//! webhook is sent to the integration. Events correspond to certain actions, for example the
-//! `issue` event is fired everytime an issue is opened, closed, labeled, etc.
-//!
-//! Read more: <https://docs.github.com/en/developers/webhooks-and-events/webhooks>
-
 use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
@@ -14,28 +6,9 @@ pub use self::check_run::CheckRunEvent;
 
 mod check_run;
 
-/// Webhook event
-///
-/// GitHub provides a wide variety of events, which enable integrations to react to almost any
-/// action that is taken on the platform. Webhooks represent a single event, and their payload is
-/// deserialized to the [`Event`] enum.
-///
-/// Events that are not yet supported by [`github-parts`] are captured in the `Event::Unsupported`
-/// variant. It contains [`serde_json::Value`] payload, which makes it possible to still work with
-/// the event.
-///
-/// Read more: <https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads>
 #[derive(Clone, Eq, PartialEq, Debug, Deserialize, Serialize)]
 pub enum Event {
-    /// Check run activity has occurred.
-    ///
-    /// The type of activity is specified in the `action` property of the payload object.
     CheckRun(Box<CheckRunEvent>),
-
-    /// Unsupported event
-    ///
-    /// This event is not yet supported by [`github-parts`], but the webhook payload is passed
-    /// through as a [`serde_json::Value`] so that consumers can still work with it.
     Unsupported(serde_json::Value),
 }
 

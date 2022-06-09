@@ -1,8 +1,3 @@
-//! Repository
-//!
-//! Repositories store source code using the Git version control system. They are the core resource
-//! on GitHub, and almost everything else is organized around them.
-
 use std::fmt::{Display, Formatter};
 
 use getset::{CopyGetters, Getters};
@@ -15,38 +10,27 @@ use crate::{id, name};
 id!(RepositoryId);
 name!(RepositoryName);
 
-/// Repository
-///
-/// Repositories are uniquely identified by the combination of their `owner` and `name`. They have
-/// a `id` that never changes, even if the repository is renamed, and a `visibility` that indicates
-/// whether the repository is public or private.
 #[derive(
     Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters, Getters,
 )]
 pub struct Repository {
-    /// Returns the id of the repository.
     #[getset(get_copy = "pub")]
     id: RepositoryId,
 
-    /// Returns the name of the repository.
     #[getset(get = "pub")]
     name: RepositoryName,
 
-    /// Returns the description of the repository.
     #[getset(get = "pub")]
     description: Option<String>,
 
-    /// Returns the owner of the repository.
     #[getset(get = "pub")]
     owner: Account,
 
-    /// Returns the visibility of the repository.
     #[getset(get_copy = "pub")]
     visibility: Visibility,
 }
 
 impl Repository {
-    /// Initializes a new repository.
     pub fn new(
         id: RepositoryId,
         name: RepositoryName,
@@ -63,11 +47,6 @@ impl Repository {
         }
     }
 
-    /// Returns the full name of the repository.
-    ///
-    /// The full name of a repository is the combination of the owner's login and the repository's
-    /// name. This combination can be used to uniquely identify a repository on GitHub, and is thus
-    /// often used to reference them externally.
     pub fn full_name(&self) -> String {
         let login = match &self.owner {
             Account::Organization(org) => org.login(),
