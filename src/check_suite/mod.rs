@@ -9,6 +9,7 @@ use getset::CopyGetters;
 use serde::{Deserialize, Serialize};
 
 use crate::check_run::{CheckRunConclusion, CheckRunStatus};
+use crate::id;
 
 id!(CheckSuiteId);
 

@@ -7,6 +7,8 @@ use std::fmt::{Display, Formatter};
 use getset::CopyGetters;
 use serde::{Deserialize, Serialize};
 
+use crate::id;
+
 id!(InstallationId);
 
 /// Installation

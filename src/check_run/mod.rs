@@ -8,15 +8,16 @@ use std::fmt::{Display, Formatter};
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
+use crate::{id, name};
+
 pub use self::check_run_conclusion::CheckRunConclusion;
-pub use self::check_run_name::CheckRunName;
 pub use self::check_run_status::CheckRunStatus;
 
 mod check_run_conclusion;
-mod check_run_name;
 mod check_run_status;
 
 id!(CheckRunId);
+name!(CheckRunName);
 
 /// Check run
 ///
