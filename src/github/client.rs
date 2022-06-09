@@ -1,14 +1,16 @@
 use std::marker::PhantomData;
 
 use anyhow::Context;
-use reqwest::{Client, Method};
+use reqwest::header::HeaderValue;
+use reqwest::{Client, Method, RequestBuilder};
 use serde::de::DeserializeOwned;
+use serde_json::Value;
 
 use crate::github::token::{AppToken, InstallationToken};
 use crate::github::{AppId, GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct GitHubClient<'a, T> {
     return_type: PhantomData<T>,
     github_host: &'a GitHubHost,
@@ -45,20 +47,61 @@ where
         }
     }
 
-    pub async fn request(&self, method: Method, url: &str) -> Result<T, GitHubClientError> {
-        let token = self.token().await?;
-
-        let data = Client::new()
-            .request(method, url)
-            .header("Authorization", format!("Bearer {}", token.get()))
-            .header("Accept", "application/vnd.github.v3+json")
-            .header("User-Agent", "devxbots/github-parts")
+    pub async fn entity(self, method: Method, url: &str) -> Result<T, GitHubClientError> {
+        let data = self
+            .client(method, url)
+            .await?
             .send()
             .await?
             .json::<T>()
             .await?;
 
         Ok(data)
+    }
+
+    pub async fn paginate(
+        self,
+        method: Method,
+        url: &str,
+        key: &str,
+    ) -> Result<Vec<T>, GitHubClientError> {
+        let mut collection = Vec::new();
+        let mut next_url = Some(String::from(url));
+
+        while next_url.is_some() {
+            let response = self
+                .client(method.clone(), &next_url.unwrap())
+                .await?
+                .send()
+                .await?;
+
+            next_url = self.get_next_url(response.headers().get("link"))?;
+            let body = &response.json::<Value>().await?;
+
+            let payload = body
+                .get(key)
+                .context("failed to find pagination key in HTTP response")?;
+
+            // TODO: Avoid cloning the payload
+            let mut entities: Vec<T> = serde_json::from_value(payload.clone())
+                .context("failed to deserialize paginated entities")?;
+
+            collection.append(&mut entities);
+        }
+
+        Ok(collection)
+    }
+
+    async fn client(&self, method: Method, url: &str) -> Result<RequestBuilder, GitHubClientError> {
+        let token = self.token().await?;
+
+        let client = Client::new()
+            .request(method, url)
+            .header("Authorization", format!("Bearer {}", token.get()))
+            .header("Accept", "application/vnd.github.v3+json")
+            .header("User-Agent", "devxbots/github-parts");
+
+        Ok(client)
     }
 
     async fn token(&self) -> Result<InstallationToken, GitHubClientError> {
@@ -72,11 +115,44 @@ where
 
         Ok(installation_token)
     }
+
+    fn get_next_url(
+        &self,
+        header: Option<&HeaderValue>,
+    ) -> Result<Option<String>, GitHubClientError> {
+        let header = match header {
+            Some(header) => header,
+            None => return Ok(None),
+        };
+
+        let relations: Vec<&str> = header
+            .to_str()
+            .context("failed to parse HTTP request header")?
+            .split(',')
+            .collect();
+
+        let next_rel = match relations.iter().find(|link| link.contains(r#"rel="next"#)) {
+            Some(link) => link,
+            None => return Ok(None),
+        };
+
+        let link_start_position = 1 + next_rel
+            .find('<')
+            .context("failed to extract next url from link header")?;
+        let link_end_position = next_rel
+            .find('>')
+            .context("failed to extract next url from link header")?;
+
+        let link = String::from(&next_rel[link_start_position..link_end_position]);
+
+        Ok(Some(link))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use mockito::mock;
+    use reqwest::header::HeaderValue;
     use reqwest::Method;
 
     use crate::github::{AppId, GitHubHost, PrivateKey};
@@ -86,7 +162,7 @@ mod tests {
     use super::GitHubClient;
 
     #[tokio::test]
-    async fn get_installation_repositories() {
+    async fn get_entity() {
         let _token_mock = mock("POST", "/app/installations/1/access_tokens")
             .with_status(200)
             .with_body(r#"{ "token": "ghs_16C7e42F292c6912E7710c838347Ae178B4a" }"#)
@@ -121,9 +197,132 @@ mod tests {
         );
 
         let url = format!("{}/repos/octocat/Hello-World", mockito::server_url());
-        let repository = client.request(Method::GET, &url).await.unwrap();
+        let repository = client.entity(Method::GET, &url).await.unwrap();
 
         assert_eq!(1296269, repository.id().get());
+    }
+
+    #[tokio::test]
+    async fn paginate_returns_all_entities() {
+        let _token_mock = mock("POST", "/app/installations/1/access_tokens")
+            .with_status(200)
+            .with_body(r#"{ "token": "ghs_16C7e42F292c6912E7710c838347Ae178B4a" }"#)
+            .create();
+        let _first_page_mock = mock("GET", "/installation/repositories")
+            .with_status(200)
+            .with_header(
+                "link",
+                &format!(
+                    "<{}/installation/repositories?page=2>; rel=\"next\"",
+                    mockito::server_url()
+                ),
+            )
+            .with_body(
+                r#"
+                {
+                    "total_count": 2,
+                    "repositories": [
+                        {
+                            "id": 1296269,
+                            "name": "Hello-World",
+                            "description": "This your first repo!",
+                            "owner": {
+                                "login": "octocat",
+                                "id": 1,
+                                "type": "User"
+                            },
+                            "visibility": "public"
+                        }
+                    ]
+                }
+            "#,
+            )
+            .create();
+        let _second_page_mock = mock("GET", "/installation/repositories?page=2")
+            .with_status(200)
+            .with_body(
+                r#"
+                {
+                    "total_count": 2,
+                    "repositories": [
+                        {
+                            "id": 1296269,
+                            "name": "Hello-World",
+                            "description": "This your first repo!",
+                            "owner": {
+                                "login": "octocat",
+                                "id": 1,
+                                "type": "User"
+                            },
+                            "visibility": "public"
+                        }
+                    ]
+                }
+            "#,
+            )
+            .create();
+
+        let github_host = GitHubHost::new(mockito::server_url());
+        let private_key =
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
+        let client: GitHubClient<Repository> = GitHubClient::new(
+            &github_host,
+            AppId::new(1),
+            &private_key,
+            InstallationId::new(1),
+        );
+
+        let url = format!("{}/installation/repositories", mockito::server_url());
+        let repository = client
+            .paginate(Method::GET, &url, "repositories")
+            .await
+            .unwrap();
+
+        assert_eq!(2, repository.len());
+    }
+
+    #[test]
+    fn get_next_url_returns_url() {
+        let github_host = GitHubHost::new(mockito::server_url());
+        let private_key =
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
+        let client: GitHubClient<Repository> = GitHubClient::new(
+            &github_host,
+            AppId::new(1),
+            &private_key,
+            InstallationId::new(1),
+        );
+
+        let header = HeaderValue::from_str(r#"<https://api.github.com/search/code?q=addClass+user%3Amozilla&page=13>; rel="prev", <https://api.github.com/search/code?q=addClass+user%3Amozilla&page=15>; rel="next", <https://api.github.com/search/code?q=addClass+user%3Amozilla&page=34>; rel="last", <https://api.github.com/search/code?q=addClass+user%3Amozilla&page=1>; rel="first""#).unwrap();
+
+        let next_url = client.get_next_url(Some(&header)).unwrap().unwrap();
+
+        assert_eq!(
+            "https://api.github.com/search/code?q=addClass+user%3Amozilla&page=15",
+            next_url
+        );
+    }
+
+    #[test]
+    fn get_next_url_returns_none() {
+        let github_host = GitHubHost::new(mockito::server_url());
+        let private_key =
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
+        let client: GitHubClient<Repository> = GitHubClient::new(
+            &github_host,
+            AppId::new(1),
+            &private_key,
+            InstallationId::new(1),
+        );
+
+        let header = HeaderValue::from_str(
+            r#"<https://api.github.com/search/code?q=addClass+user%3Amozilla&page=13>; rel="prev""#,
+        )
+        .unwrap();
+
+        let next_url = client.get_next_url(Some(&header)).unwrap();
+
+        assert!(next_url.is_none());
     }
 
     #[test]

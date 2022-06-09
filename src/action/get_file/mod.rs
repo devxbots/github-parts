@@ -36,7 +36,7 @@ pub async fn get_file(
         path
     );
 
-    let response = client.request(Method::GET, &url).await;
+    let response = client.entity(Method::GET, &url).await;
 
     let payload = match response {
         Ok(payload) => payload,
