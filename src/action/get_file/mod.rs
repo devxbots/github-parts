@@ -1,9 +1,9 @@
-use anyhow::Context;
-use reqwest::Client;
+use anyhow::{anyhow, Context};
+use reqwest::Method;
 
 use crate::account::Login;
 use crate::action::get_file::payload::GetFileResponse;
-use crate::github::token::{AppToken, InstallationToken};
+use crate::github::client::{GitHubClient, GitHubClientError};
 use crate::github::{AppId, GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 use crate::repository::RepositoryName;
@@ -18,13 +18,16 @@ mod result;
 
 pub async fn get_file(
     github_host: &GitHubHost,
-    app_id: &AppId,
+    app_id: AppId,
     private_key: &PrivateKey,
-    installation: &InstallationId,
+    installation: InstallationId,
     owner: &Login,
     repository: &RepositoryName,
     path: &str,
 ) -> Result<GetFileResult, GetFileError> {
+    let client: GitHubClient<GetFileResponse> =
+        GitHubClient::new(github_host, app_id, private_key, installation);
+
     let url = format!(
         "{}/repos/{}/{}/contents/{}",
         github_host.get(),
@@ -33,29 +36,24 @@ pub async fn get_file(
         path
     );
 
-    let app_token =
-        AppToken::new(app_id, private_key).context("failed to create GitHub App token")?;
-    let installation_token = InstallationToken::new(github_host, &app_token, installation)
-        .await
-        .context("failed to create GitHub installation token")?;
+    let response = client.request(Method::GET, &url).await;
 
-    let response = Client::new()
-        .get(url)
-        .header(
-            "Authorization",
-            format!("Bearer {}", installation_token.get()),
-        )
-        .header("Accept", "application/vnd.github.v3+json")
-        .header("User-Agent", "devxbots/github-parts")
-        .send()
-        .await
-        .context("failed to query GitHub's content API")?
-        .json::<GetFileResponse>()
-        .await
-        .context("failed to deserialize response from GitHub's content API")?;
+    let payload = match response {
+        Ok(payload) => payload,
+        Err(error) => {
+            if let GitHubClientError::Request(request_error) = &error {
+                if let Some(status) = request_error.status() {
+                    if status == 404 {
+                        return Err(GetFileError::NotFound);
+                    }
+                }
+            }
 
-    // TODO: Handle error properly instead of just defaulting to a NOT FOUND
-    let body = match response {
+            return Err(anyhow!(error).into());
+        }
+    };
+
+    let body = match payload {
         GetFileResponse::Success(body) => body,
         GetFileResponse::Error(_) => return Err(GetFileError::NotFound),
     };
@@ -111,9 +109,9 @@ mod tests {
 
         let file = get_file(
             &GitHubHost::new(mockito::server_url()),
-            &AppId::new(1),
+            AppId::new(1),
             &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
-            &InstallationId::new(1),
+            InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
             "README.md",
@@ -172,9 +170,9 @@ mod tests {
 
         let error = get_file(
             &GitHubHost::new(mockito::server_url()),
-            &AppId::new(1),
+            AppId::new(1),
             &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
-            &InstallationId::new(1),
+            InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
             "lib/octokit",
@@ -215,9 +213,9 @@ mod tests {
 
         let error = get_file(
             &GitHubHost::new(mockito::server_url()),
-            &AppId::new(1),
+            AppId::new(1),
             &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
-            &InstallationId::new(1),
+            InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
             "bin/some-symlink",
@@ -258,9 +256,9 @@ mod tests {
 
         let error = get_file(
             &GitHubHost::new(mockito::server_url()),
-            &AppId::new(1),
+            AppId::new(1),
             &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
-            &InstallationId::new(1),
+            InstallationId::new(1),
             &Login::new("jquery"),
             &RepositoryName::new("jquery"),
             "test/qunit",
@@ -288,9 +286,9 @@ mod tests {
 
         let error = get_file(
             &GitHubHost::new(mockito::server_url()),
-            &AppId::new(1),
+            AppId::new(1),
             &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
-            &InstallationId::new(1),
+            InstallationId::new(1),
             &Login::new("devxbots"),
             &RepositoryName::new("github-parts"),
             "foo",

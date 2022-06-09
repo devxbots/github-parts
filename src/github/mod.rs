@@ -13,4 +13,5 @@ mod webhook_secret;
 id!(AppId);
 name!(GitHubHost);
 
+pub mod client;
 pub mod token;
