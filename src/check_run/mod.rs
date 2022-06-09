@@ -8,6 +8,7 @@ use std::fmt::{Display, Formatter};
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
+use crate::check_suite::CheckSuite;
 use crate::{id, name};
 
 pub use self::check_run_conclusion::CheckRunConclusion;
@@ -37,6 +38,10 @@ pub struct CheckRun {
     /// Returns the name of the check run.
     #[getset(get = "pub")]
     name: CheckRunName,
+
+    /// Returns the check suite that the check run is a part of.
+    #[getset(get = "pub")]
+    check_suite: CheckSuite,
 
     /// Returns the status of the check run.
     #[getset(get_copy = "pub")]

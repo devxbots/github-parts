@@ -32,12 +32,14 @@ pub struct CheckSuite {
     status: CheckRunStatus,
 
     /// Returns the conclusion of the check suite.
+    ///
+    /// The conclusion is only set when the status of at least one check run is `completed`.
     #[getset(get_copy = "pub")]
-    conclusion: CheckRunConclusion,
+    conclusion: Option<CheckRunConclusion>,
 
     /// Returns the latest number of check runs that are part of the suite.
     #[getset(get_copy = "pub")]
-    latest_check_runs_count: u64,
+    latest_check_runs_count: Option<u64>,
 }
 
 #[cfg(test)]
