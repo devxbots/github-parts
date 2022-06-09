@@ -73,10 +73,11 @@ mod tests {
     use mockito::mock;
 
     use crate::account::Login;
-    use crate::action::get_file::{get_file, GetFileError};
     use crate::github::{AppId, GitHubHost, PrivateKey};
     use crate::installation::InstallationId;
     use crate::repository::RepositoryName;
+
+    use super::{get_file, GetFileError};
 
     #[tokio::test]
     async fn get_file_with_file() {

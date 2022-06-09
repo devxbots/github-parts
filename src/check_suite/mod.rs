@@ -16,7 +16,7 @@ pub struct CheckSuite {
     id: CheckSuiteId,
 
     #[getset(get_copy = "pub")]
-    status: CheckRunStatus,
+    status: Option<CheckRunStatus>,
 
     #[getset(get_copy = "pub")]
     conclusion: Option<CheckRunConclusion>,
