@@ -1,5 +1,3 @@
-//! Get a file from a repository on GitHub
-
 use anyhow::Context;
 use reqwest::Client;
 
@@ -18,9 +16,6 @@ mod error;
 mod payload;
 mod result;
 
-/// Get a file
-///
-/// This action downloads a file from GitHub.
 pub async fn get_file(
     github_host: &GitHubHost,
     app_id: &AppId,

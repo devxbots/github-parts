@@ -2,31 +2,15 @@ use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
 
-/// Check run conclusion
-///
-/// When a check run finishes, its result is indicated by the `conclusion`.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CheckRunConclusion {
-    /// The check run finished successfully.
     Success,
-
-    /// The check run failed.
     Failure,
-
-    /// The check run finished without a conclusion.
     Neutral,
-
-    /// The check run was cancelled.
     Cancelled,
-
-    /// The check run timed out.
     TimedOut,
-
-    /// The check run requires an action by the user.
     ActionRequired,
-
-    /// The check run is stale.
     Stale,
 }
 

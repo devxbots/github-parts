@@ -1,8 +1,3 @@
-//! GitHub organization
-//!
-//! Organizations have various unique properties such as a `login` and an `id` that are used to
-//! identify and interact with them.
-
 use std::fmt::{Display, Formatter};
 
 use getset::{CopyGetters, Getters};
@@ -10,26 +5,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::account::{AccountId, Login};
 
-/// GitHub organization
-///
-/// Organizations on GitHub have a unique `id` that is used throughout GitHub's REST API to identify
-/// them. They also have a `login`, which is a human-readable name that must be unique, but can be
-/// changed by the owner.
 #[derive(
     Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters, Getters,
 )]
 pub struct Organization {
-    /// Returns the login of the organization.
     #[getset(get = "pub")]
     login: Login,
 
-    /// Returns the id of the organization.
     #[getset(get_copy = "pub")]
     id: AccountId,
 }
 
 impl Organization {
-    /// Initializes a new organization.
     pub fn new(login: Login, id: AccountId) -> Self {
         Self { login, id }
     }

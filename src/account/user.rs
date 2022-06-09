@@ -1,8 +1,3 @@
-//! GitHub user
-//!
-//! Users have various unique properties such as a `login` and an `id` that are used to identify and
-//! interact with them.
-
 use std::fmt::{Display, Formatter};
 
 use getset::{CopyGetters, Getters};
@@ -10,26 +5,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::account::{AccountId, Login};
 
-/// GitHub user
-///
-/// Users on GitHub have a unique `id` that is used throughout GitHub's REST API to identify users.
-/// They also have a `login`, which is a human-readable name that must be unique, but can be changed
-/// by the owner.
 #[derive(
     Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters, Getters,
 )]
 pub struct User {
-    /// Returns the login of the user.
     #[getset(get = "pub")]
     login: Login,
 
-    /// Returns the id of the user.
     #[getset(get_copy = "pub")]
     id: AccountId,
 }
 
 impl User {
-    /// Initializes a new user.
     pub fn new(login: Login, id: AccountId) -> Self {
         Self { login, id }
     }

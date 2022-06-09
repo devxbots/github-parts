@@ -1,8 +1,3 @@
-//! Check suite
-//!
-//! When code is pushed to GitHub, a new check suite is started. Apps and integrations can then
-//! start check runs inside this suite, and GitHub will show them together in the UI.
-
 use std::fmt::{Display, Formatter};
 
 use getset::CopyGetters;
@@ -13,31 +8,19 @@ use crate::id;
 
 id!(CheckSuiteId);
 
-/// Check suite
-///
-/// When code is pushed to GitHub, a new check suite is started. Apps and integrations can then
-/// start check runs inside this suite, and GitHub will show them together in the UI.
-///
-/// The `status` and `conclusion` of a check suite are derived from its check runs.
 #[derive(
     Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters,
 )]
 pub struct CheckSuite {
-    /// Returns the check suite id.
     #[getset(get_copy = "pub")]
     id: CheckSuiteId,
 
-    /// Returns the status of the check suite.
     #[getset(get_copy = "pub")]
     status: CheckRunStatus,
 
-    /// Returns the conclusion of the check suite.
-    ///
-    /// The conclusion is only set when the status of at least one check run is `completed`.
     #[getset(get_copy = "pub")]
     conclusion: Option<CheckRunConclusion>,
 
-    /// Returns the latest number of check runs that are part of the suite.
     #[getset(get_copy = "pub")]
     latest_check_runs_count: Option<u64>,
 }
