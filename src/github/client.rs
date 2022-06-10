@@ -4,6 +4,7 @@ use anyhow::Context;
 use reqwest::header::HeaderValue;
 use reqwest::{Client, Method, RequestBuilder};
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::github::token::{AppToken, InstallationToken};
@@ -47,16 +48,34 @@ where
         }
     }
 
-    pub async fn entity(&self, method: Method, endpoint: &str) -> Result<T, GitHubClientError> {
+    pub async fn get(&self, endpoint: &str) -> Result<T, GitHubClientError> {
         let url = format!("{}{}", self.github_host.get(), endpoint);
 
         let data = self
-            .client(method, &url)
+            .client(Method::GET, &url)
             .await?
             .send()
             .await?
             .json::<T>()
             .await?;
+
+        Ok(data)
+    }
+
+    pub async fn post(
+        &self,
+        endpoint: &str,
+        body: Option<impl Serialize>,
+    ) -> Result<T, GitHubClientError> {
+        let url = format!("{}{}", self.github_host.get(), endpoint);
+
+        let mut client = self.client(Method::POST, &url).await?;
+
+        if body.is_some() {
+            client = client.json(&body.unwrap());
+        }
+
+        let data = client.send().await?.json::<T>().await?;
 
         Ok(data)
     }
@@ -200,10 +219,7 @@ mod tests {
             InstallationId::new(1),
         );
 
-        let repository = client
-            .entity(Method::GET, "/repos/octocat/Hello-World")
-            .await
-            .unwrap();
+        let repository = client.get("/repos/octocat/Hello-World").await.unwrap();
 
         assert_eq!(1296269, repository.id().get());
     }
