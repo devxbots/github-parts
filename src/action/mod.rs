@@ -3,6 +3,8 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 pub mod get_file;
+
+pub mod create_check_run;
 pub mod list_check_runs;
 
 #[async_trait]

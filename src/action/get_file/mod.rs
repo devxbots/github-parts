@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context};
-use reqwest::Method;
 
 use crate::account::Login;
 use crate::action::get_file::payload::GetFileResponse;
@@ -35,7 +34,7 @@ pub async fn get_file(
         path
     );
 
-    let response = client.entity(Method::GET, &url).await;
+    let response = client.get(&url).await;
 
     let payload = match response {
         Ok(payload) => payload,

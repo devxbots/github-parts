@@ -45,5 +45,11 @@ macro_rules! name {
                 write!(f, "{}", self.0)
             }
         }
+
+        impl From<&str> for $name {
+            fn from(string: &str) -> $name {
+                $name::new(string)
+            }
+        }
     };
 }
