@@ -29,8 +29,7 @@ pub async fn get_file(
         GitHubClient::new(github_host, app_id, private_key, installation);
 
     let url = format!(
-        "{}/repos/{}/{}/contents/{}",
-        github_host.get(),
+        "/repos/{}/{}/contents/{}",
         owner.get(),
         repository.get(),
         path

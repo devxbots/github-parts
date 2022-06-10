@@ -47,9 +47,11 @@ where
         }
     }
 
-    pub async fn entity(self, method: Method, url: &str) -> Result<T, GitHubClientError> {
+    pub async fn entity(&self, method: Method, endpoint: &str) -> Result<T, GitHubClientError> {
+        let url = format!("{}{}", self.github_host.get(), endpoint);
+
         let data = self
-            .client(method, url)
+            .client(method, &url)
             .await?
             .send()
             .await?
@@ -60,13 +62,15 @@ where
     }
 
     pub async fn paginate(
-        self,
+        &self,
         method: Method,
-        url: &str,
+        endpoint: &str,
         key: &str,
     ) -> Result<Vec<T>, GitHubClientError> {
+        let url = format!("{}{}", self.github_host.get(), endpoint);
+
         let mut collection = Vec::new();
-        let mut next_url = Some(String::from(url));
+        let mut next_url = Some(url);
 
         while next_url.is_some() {
             let response = self
@@ -196,8 +200,10 @@ mod tests {
             InstallationId::new(1),
         );
 
-        let url = format!("{}/repos/octocat/Hello-World", mockito::server_url());
-        let repository = client.entity(Method::GET, &url).await.unwrap();
+        let repository = client
+            .entity(Method::GET, "/repos/octocat/Hello-World")
+            .await
+            .unwrap();
 
         assert_eq!(1296269, repository.id().get());
     }
@@ -272,9 +278,8 @@ mod tests {
             InstallationId::new(1),
         );
 
-        let url = format!("{}/installation/repositories", mockito::server_url());
         let repository = client
-            .paginate(Method::GET, &url, "repositories")
+            .paginate(Method::GET, "/installation/repositories", "repositories")
             .await
             .unwrap();
 

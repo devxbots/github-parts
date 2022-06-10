@@ -1,40 +1,55 @@
 use anyhow::Context;
+use async_trait::async_trait;
 use reqwest::Method;
 
 use crate::account::Login;
+use crate::action::Action;
 use crate::check_run::CheckRun;
 use crate::check_suite::CheckSuiteId;
 use crate::github::client::GitHubClient;
-use crate::github::{AppId, GitHubHost, PrivateKey};
-use crate::installation::InstallationId;
 use crate::repository::RepositoryName;
 
-pub async fn list_check_runs(
-    github_host: &GitHubHost,
-    app_id: AppId,
-    private_key: &PrivateKey,
-    installation_id: InstallationId,
-    owner: &Login,
-    repository: &RepositoryName,
-    check_suite_id: CheckSuiteId,
-) -> Result<Vec<CheckRun>, ListCheckRunsError> {
-    let client: GitHubClient<CheckRun> =
-        GitHubClient::new(github_host, app_id, private_key, installation_id);
+pub struct ListCheckRuns<'a> {
+    github_client: &'a GitHubClient<'a, CheckRun>,
+    owner: &'a Login,
+    repository: &'a RepositoryName,
+}
 
-    let url = format!(
-        "{}/repos/{}/{}/check-suites/{}/check-runs",
-        github_host.get(),
-        owner.get(),
-        repository.get(),
-        check_suite_id
-    );
+impl<'a> ListCheckRuns<'a> {
+    pub fn new(
+        github_client: &'a GitHubClient<'a, CheckRun>,
+        owner: &'a Login,
+        repository: &'a RepositoryName,
+    ) -> Self {
+        Self {
+            github_client,
+            owner,
+            repository,
+        }
+    }
+}
 
-    let check_runs = client
-        .paginate(Method::GET, &url, "check_runs")
-        .await
-        .context("failed to query check runs")?;
+#[async_trait]
+impl<'a> Action<CheckSuiteId, Vec<CheckRun>, ListCheckRunsError> for ListCheckRuns<'a> {
+    async fn execute(
+        &self,
+        check_suite_id: &CheckSuiteId,
+    ) -> Result<Vec<CheckRun>, ListCheckRunsError> {
+        let url = format!(
+            "/repos/{}/{}/check-suites/{}/check-runs",
+            self.owner.get(),
+            self.repository.get(),
+            check_suite_id
+        );
 
-    Ok(check_runs)
+        let check_runs = self
+            .github_client
+            .paginate(Method::GET, &url, "check_runs")
+            .await
+            .context("failed to query check runs")?;
+
+        Ok(check_runs)
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -48,12 +63,14 @@ mod tests {
     use mockito::mock;
 
     use crate::account::Login;
+    use crate::action::Action;
     use crate::check_suite::CheckSuiteId;
+    use crate::github::client::GitHubClient;
     use crate::github::{AppId, GitHubHost, PrivateKey};
     use crate::installation::InstallationId;
     use crate::repository::RepositoryName;
 
-    use super::list_check_runs;
+    use super::ListCheckRuns;
 
     #[tokio::test]
     async fn list_check_runs_returns_all_check_runs() {
@@ -161,17 +178,22 @@ mod tests {
                 }
             "#).create();
 
-        let check_runs = list_check_runs(
-            &GitHubHost::new(mockito::server_url()),
+        let github_host = GitHubHost::new(mockito::server_url());
+        let private_key =
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
+        let github_client = GitHubClient::new(
+            &github_host,
             AppId::new(1),
-            &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
+            &private_key,
             InstallationId::new(1),
-            &Login::new("github"),
-            &RepositoryName::new("hello-world"),
-            CheckSuiteId::new(5),
-        )
-        .await
-        .unwrap();
+        );
+        let owner = Login::new("github");
+        let repository = RepositoryName::new("hello-world");
+
+        let check_runs = ListCheckRuns::new(&github_client, &owner, &repository)
+            .execute(&CheckSuiteId::new(5))
+            .await
+            .unwrap();
 
         assert_eq!(1, check_runs.len());
     }
