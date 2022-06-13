@@ -4,6 +4,7 @@ use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
 use crate::check_suite::CheckSuite;
+use crate::git::HeadSha;
 use crate::{id, name};
 
 pub use self::check_run_conclusion::CheckRunConclusion;
@@ -21,6 +22,9 @@ name!(CheckRunName);
 pub struct CheckRun {
     #[getset(get_copy = "pub")]
     id: CheckRunId,
+
+    #[getset(get = "pub")]
+    head_sha: HeadSha,
 
     #[getset(get = "pub")]
     name: CheckRunName,
