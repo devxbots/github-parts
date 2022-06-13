@@ -6,6 +6,7 @@ pub mod get_file;
 
 pub mod create_check_run;
 pub mod list_check_runs;
+pub mod update_check_run;
 
 #[async_trait]
 pub trait Action<Input, Output, Error>
