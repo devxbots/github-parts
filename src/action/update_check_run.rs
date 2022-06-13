@@ -5,45 +5,48 @@ use serde::Serialize;
 
 use crate::account::Login;
 use crate::action::Action;
-use crate::check_run::{CheckRun, CheckRunConclusion, CheckRunName, CheckRunStatus};
-use crate::git::HeadSha;
+use crate::check_run::{CheckRun, CheckRunConclusion, CheckRunId, CheckRunStatus};
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
-pub struct CreateCheckRun<'a> {
+pub struct UpdateCheckRun<'a> {
     github_client: &'a GitHubClient<'a, CheckRun>,
     owner: &'a Login,
     repository: &'a RepositoryName,
+    check_run_id: CheckRunId,
 }
 
-impl<'a> CreateCheckRun<'a> {
+impl<'a> UpdateCheckRun<'a> {
     pub fn new(
         github_client: &'a GitHubClient<'a, CheckRun>,
         owner: &'a Login,
         repository: &'a RepositoryName,
+        check_run_id: CheckRunId,
     ) -> Self {
         Self {
             github_client,
             owner,
             repository,
+            check_run_id,
         }
     }
 }
 
 #[async_trait]
-impl<'a> Action<CreateCheckRunInput, CheckRun, CreateCheckRunError> for CreateCheckRun<'a> {
-    async fn execute(&self, input: &CreateCheckRunInput) -> Result<CheckRun, CreateCheckRunError> {
+impl<'a> Action<UpdateCheckRunInput, CheckRun, UpdateCheckRunError> for UpdateCheckRun<'a> {
+    async fn execute(&self, input: &UpdateCheckRunInput) -> Result<CheckRun, UpdateCheckRunError> {
         let url = format!(
-            "/repos/{}/{}/check-runs",
+            "/repos/{}/{}/check-runs/{}",
             self.owner.get(),
             self.repository.get(),
+            self.check_run_id
         );
 
         let check_run = self
             .github_client
-            .post(&url, Some(input))
+            .patch(&url, Some(input))
             .await
-            .context("failed to create check run")?;
+            .context("failed to update check run")?;
 
         Ok(check_run)
     }
@@ -51,16 +54,14 @@ impl<'a> Action<CreateCheckRunInput, CheckRun, CreateCheckRunError> for CreateCh
 
 // TODO: Pass by reference, not by value (e.g. &HeadSha)
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize)]
-pub struct CreateCheckRunInput {
-    pub name: CheckRunName,
-    pub head_sha: HeadSha,
+pub struct UpdateCheckRunInput {
     pub status: Option<CheckRunStatus>,
     pub conclusion: Option<CheckRunConclusion>,
     pub completed_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum CreateCheckRunError {
+pub enum UpdateCheckRunError {
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
 }
@@ -71,35 +72,35 @@ mod tests {
 
     use crate::account::Login;
     use crate::action::Action;
-    use crate::check_run::CheckRunStatus;
+    use crate::check_run::{CheckRunConclusion, CheckRunId, CheckRunStatus};
     use crate::github::client::GitHubClient;
     use crate::github::{AppId, GitHubHost, PrivateKey};
     use crate::installation::InstallationId;
     use crate::repository::RepositoryName;
 
-    use super::{CreateCheckRun, CreateCheckRunInput};
+    use super::{UpdateCheckRun, UpdateCheckRunInput};
 
     #[tokio::test]
-    async fn create_check_run_returns_check_run() {
+    async fn update_check_run_returns_check_run() {
         let _token_mock = mock("POST", "/app/installations/1/access_tokens")
             .with_status(200)
             .with_body(r#"{ "token": "ghs_16C7e42F292c6912E7710c838347Ae178B4a" }"#)
             .create();
-        let _content_mock = mock("POST", "/repos/github/hello-world/check-runs")
+        let _content_mock = mock("PATCH", "/repos/github/hello-world/check-runs/4")
             .with_status(201)
             .with_body(r#"
                 {
                   "id": 4,
                   "head_sha": "ce587453ced02b1526dfb4cb910479d431683101",
                   "node_id": "MDg6Q2hlY2tSdW40",
-                  "external_id": "42",
+                  "external_id": "",
                   "url": "https://api.github.com/repos/github/hello-world/check-runs/4",
                   "html_url": "https://github.com/github/hello-world/runs/4",
                   "details_url": "https://example.com",
-                  "status": "in_progress",
-                  "conclusion": null,
+                  "status": "completed",
+                  "conclusion": "neutral",
                   "started_at": "2018-05-04T01:14:52Z",
-                  "completed_at": null,
+                  "completed_at": "2018-05-04T01:14:52Z",
                   "output": {
                     "title": "Mighty Readme report",
                     "summary": "There are 0 failures, 2 warnings, and 1 notice.",
@@ -191,20 +192,19 @@ mod tests {
         );
         let owner = Login::new("github");
         let repository = RepositoryName::new("hello-world");
+        let check_run_id = CheckRunId::new(4);
 
-        let input = CreateCheckRunInput {
-            name: "github-parts".into(),
-            head_sha: "ce587453ced02b1526dfb4cb910479d431683101".into(),
-            status: Some(CheckRunStatus::InProgress),
-            conclusion: None,
+        let input = UpdateCheckRunInput {
+            status: Some(CheckRunStatus::Completed),
+            conclusion: Some(CheckRunConclusion::Neutral),
             completed_at: None,
         };
 
-        let check_run = CreateCheckRun::new(&github_client, &owner, &repository)
+        let check_run = UpdateCheckRun::new(&github_client, &owner, &repository, check_run_id)
             .execute(&input)
             .await
             .unwrap();
 
-        assert_eq!(4, check_run.id().get());
+        assert!(matches!(check_run.status(), CheckRunStatus::Completed));
     }
 }
