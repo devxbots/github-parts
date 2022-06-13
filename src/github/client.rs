@@ -67,17 +67,15 @@ where
         endpoint: &str,
         body: Option<impl Serialize>,
     ) -> Result<T, GitHubClientError> {
-        let url = format!("{}{}", self.github_host.get(), endpoint);
+        self.request_with_body(Method::POST, endpoint, body).await
+    }
 
-        let mut client = self.client(Method::POST, &url).await?;
-
-        if body.is_some() {
-            client = client.json(&body.unwrap());
-        }
-
-        let data = client.send().await?.json::<T>().await?;
-
-        Ok(data)
+    pub async fn patch(
+        &self,
+        endpoint: &str,
+        body: Option<impl Serialize>,
+    ) -> Result<T, GitHubClientError> {
+        self.request_with_body(Method::PATCH, endpoint, body).await
     }
 
     pub async fn paginate(
@@ -169,6 +167,25 @@ where
         let link = String::from(&next_rel[link_start_position..link_end_position]);
 
         Ok(Some(link))
+    }
+
+    async fn request_with_body(
+        &self,
+        method: Method,
+        endpoint: &str,
+        body: Option<impl Serialize>,
+    ) -> Result<T, GitHubClientError> {
+        let url = format!("{}{}", self.github_host.get(), endpoint);
+
+        let mut client = self.client(method, &url).await?;
+
+        if body.is_some() {
+            client = client.json(&body.unwrap());
+        }
+
+        let data = client.send().await?.json::<T>().await?;
+
+        Ok(data)
     }
 }
 
