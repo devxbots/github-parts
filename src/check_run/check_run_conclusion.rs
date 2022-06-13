@@ -8,6 +8,7 @@ pub enum CheckRunConclusion {
     Success,
     Failure,
     Neutral,
+    Skipped,
     Cancelled,
     TimedOut,
     ActionRequired,
@@ -20,6 +21,7 @@ impl Display for CheckRunConclusion {
             CheckRunConclusion::Success => "success",
             CheckRunConclusion::Failure => "failure",
             CheckRunConclusion::Neutral => "neutral",
+            CheckRunConclusion::Skipped => "skipped",
             CheckRunConclusion::Cancelled => "cancelled",
             CheckRunConclusion::TimedOut => "timed out",
             CheckRunConclusion::ActionRequired => "action required",
@@ -39,6 +41,7 @@ mod tests {
         assert_eq!("success", CheckRunConclusion::Success.to_string());
         assert_eq!("failure", CheckRunConclusion::Failure.to_string());
         assert_eq!("neutral", CheckRunConclusion::Neutral.to_string());
+        assert_eq!("skipped", CheckRunConclusion::Skipped.to_string());
         assert_eq!("cancelled", CheckRunConclusion::Cancelled.to_string());
         assert_eq!("timed out", CheckRunConclusion::TimedOut.to_string());
         assert_eq!(
