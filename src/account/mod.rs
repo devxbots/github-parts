@@ -20,6 +20,15 @@ pub enum Account {
     User(User),
 }
 
+impl Account {
+    pub fn login(&self) -> &Login {
+        match self {
+            Account::Organization(org) => org.login(),
+            Account::User(user) => user.login(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Account;

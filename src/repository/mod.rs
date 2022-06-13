@@ -48,12 +48,7 @@ impl Repository {
     }
 
     pub fn full_name(&self) -> String {
-        let login = match &self.owner {
-            Account::Organization(org) => org.login(),
-            Account::User(user) => user.login(),
-        };
-
-        format!("{}/{}", login, self.name())
+        format!("{}/{}", self.owner.login(), self.name())
     }
 }
 
