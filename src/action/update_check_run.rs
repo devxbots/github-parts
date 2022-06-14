@@ -58,8 +58,11 @@ impl<'a> Action<UpdateCheckRunInput, CheckRun, UpdateCheckRunError> for UpdateCh
 // TODO: Pass by reference, not by value (e.g. &HeadSha)
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize)]
 pub struct UpdateCheckRunInput {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<CheckRunStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub conclusion: Option<CheckRunConclusion>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub completed_at: Option<DateTime<Utc>>,
 }
 
