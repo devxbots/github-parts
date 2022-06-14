@@ -45,6 +45,7 @@ pub struct GetFileErrorPayload {
 impl TryFrom<GetFilePayload> for GetFileResult {
     type Error = GetFileError;
 
+    #[tracing::instrument]
     fn try_from(value: GetFilePayload) -> Result<Self, Self::Error> {
         let payload = match value {
             GetFilePayload::Directory => Err(GetFileError::Directory),

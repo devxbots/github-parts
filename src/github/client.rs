@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use anyhow::Context;
@@ -12,7 +13,10 @@ use crate::github::{AppId, GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 
 #[derive(Clone, Debug)]
-pub struct GitHubClient<'a, T> {
+pub struct GitHubClient<'a, T>
+where
+    T: Debug,
+{
     return_type: PhantomData<T>,
     github_host: &'a GitHubHost,
     app_id: AppId,
@@ -31,8 +35,9 @@ pub enum GitHubClientError {
 
 impl<'a, T> GitHubClient<'a, T>
 where
-    T: DeserializeOwned,
+    T: Debug + DeserializeOwned,
 {
+    #[tracing::instrument]
     pub fn new(
         github_host: &'a GitHubHost,
         app_id: AppId,
@@ -48,6 +53,7 @@ where
         }
     }
 
+    #[tracing::instrument]
     pub async fn get(&self, endpoint: &str) -> Result<T, GitHubClientError> {
         let url = format!("{}{}", self.github_host.get(), endpoint);
 
@@ -62,6 +68,7 @@ where
         Ok(data)
     }
 
+    #[tracing::instrument(skip(body))]
     pub async fn post(
         &self,
         endpoint: &str,
@@ -70,6 +77,7 @@ where
         self.request_with_body(Method::POST, endpoint, body).await
     }
 
+    #[tracing::instrument(skip(body))]
     pub async fn patch(
         &self,
         endpoint: &str,
@@ -78,6 +86,7 @@ where
         self.request_with_body(Method::PATCH, endpoint, body).await
     }
 
+    #[tracing::instrument]
     pub async fn paginate(
         &self,
         method: Method,
@@ -113,6 +122,7 @@ where
         Ok(collection)
     }
 
+    #[tracing::instrument]
     async fn client(&self, method: Method, url: &str) -> Result<RequestBuilder, GitHubClientError> {
         let token = self.token().await?;
 
@@ -125,6 +135,7 @@ where
         Ok(client)
     }
 
+    #[tracing::instrument]
     async fn token(&self) -> Result<InstallationToken, GitHubClientError> {
         let app_token = AppToken::new(&self.app_id, self.private_key)
             .context("failed to create GitHub App token")?;
@@ -137,6 +148,7 @@ where
         Ok(installation_token)
     }
 
+    #[tracing::instrument]
     fn get_next_url(
         &self,
         header: Option<&HeaderValue>,
@@ -169,6 +181,7 @@ where
         Ok(Some(link))
     }
 
+    #[tracing::instrument(skip(body))]
     async fn request_with_body(
         &self,
         method: Method,
@@ -177,13 +190,21 @@ where
     ) -> Result<T, GitHubClientError> {
         let url = format!("{}{}", self.github_host.get(), endpoint);
 
-        let mut client = self.client(method, &url).await?;
+        let mut client = self.client(method.clone(), &url).await?;
 
-        if body.is_some() {
-            client = client.json(&body.unwrap());
+        if let Some(body) = body {
+            client = client.json(&body);
         }
 
-        let data = client.send().await?.json::<T>().await?;
+        let data = client
+            .send()
+            .await
+            .map_err(|error| {
+                tracing::error!("failed to send {} request to GitHub: {:?}", method, error);
+                error
+            })?
+            .json::<T>()
+            .await?;
 
         Ok(data)
     }

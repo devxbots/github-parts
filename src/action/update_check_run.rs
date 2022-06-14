@@ -9,6 +9,7 @@ use crate::check_run::{CheckRun, CheckRunConclusion, CheckRunId, CheckRunStatus}
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
+#[derive(Copy, Clone, Debug)]
 pub struct UpdateCheckRun<'a> {
     github_client: &'a GitHubClient<'a, CheckRun>,
     owner: &'a Login,
@@ -17,6 +18,7 @@ pub struct UpdateCheckRun<'a> {
 }
 
 impl<'a> UpdateCheckRun<'a> {
+    #[tracing::instrument]
     pub fn new(
         github_client: &'a GitHubClient<'a, CheckRun>,
         owner: &'a Login,
@@ -34,6 +36,7 @@ impl<'a> UpdateCheckRun<'a> {
 
 #[async_trait]
 impl<'a> Action<UpdateCheckRunInput, CheckRun, UpdateCheckRunError> for UpdateCheckRun<'a> {
+    #[tracing::instrument]
     async fn execute(&self, input: &UpdateCheckRunInput) -> Result<CheckRun, UpdateCheckRunError> {
         let url = format!(
             "/repos/{}/{}/check-runs/{}",
