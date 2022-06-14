@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use reqwest::header::HeaderValue;
 use reqwest::{Client, Method, RequestBuilder};
 use serde::de::DeserializeOwned;
@@ -196,15 +196,21 @@ where
             client = client.json(&body);
         }
 
-        let data = client
-            .send()
-            .await
-            .map_err(|error| {
-                tracing::error!("failed to send {} request to GitHub: {:?}", method, error);
-                error
-            })?
-            .json::<T>()
-            .await?;
+        let response = client.send().await?;
+
+        if !response.status().is_success() {
+            tracing::error!(
+                "failed to {} to GitHub: {:?}",
+                &method,
+                response.text().await?
+            );
+            return Err(GitHubClientError::UnexpectedError(anyhow!(
+                "failed to {} to GitHub",
+                &method
+            )));
+        }
+
+        let data = response.json::<T>().await?;
 
         Ok(data)
     }
