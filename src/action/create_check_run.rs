@@ -57,8 +57,11 @@ impl<'a> Action<CreateCheckRunInput, CheckRun, CreateCheckRunError> for CreateCh
 pub struct CreateCheckRunInput {
     pub name: CheckRunName,
     pub head_sha: HeadSha,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<CheckRunStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub conclusion: Option<CheckRunConclusion>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub completed_at: Option<DateTime<Utc>>,
 }
 
