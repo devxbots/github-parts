@@ -15,6 +15,7 @@ mod error;
 mod payload;
 mod result;
 
+#[tracing::instrument]
 pub async fn get_file(
     github_host: &GitHubHost,
     app_id: AppId,

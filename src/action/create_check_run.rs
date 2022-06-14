@@ -10,6 +10,7 @@ use crate::git::HeadSha;
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
+#[derive(Copy, Clone, Debug)]
 pub struct CreateCheckRun<'a> {
     github_client: &'a GitHubClient<'a, CheckRun>,
     owner: &'a Login,
@@ -17,6 +18,7 @@ pub struct CreateCheckRun<'a> {
 }
 
 impl<'a> CreateCheckRun<'a> {
+    #[tracing::instrument]
     pub fn new(
         github_client: &'a GitHubClient<'a, CheckRun>,
         owner: &'a Login,
@@ -32,6 +34,7 @@ impl<'a> CreateCheckRun<'a> {
 
 #[async_trait]
 impl<'a> Action<CreateCheckRunInput, CheckRun, CreateCheckRunError> for CreateCheckRun<'a> {
+    #[tracing::instrument]
     async fn execute(&self, input: &CreateCheckRunInput) -> Result<CheckRun, CreateCheckRunError> {
         let url = format!(
             "/repos/{}/{}/check-runs",

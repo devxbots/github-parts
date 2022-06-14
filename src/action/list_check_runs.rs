@@ -9,6 +9,7 @@ use crate::check_suite::CheckSuiteId;
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
+#[derive(Copy, Clone, Debug)]
 pub struct ListCheckRuns<'a> {
     github_client: &'a GitHubClient<'a, CheckRun>,
     owner: &'a Login,
@@ -16,6 +17,7 @@ pub struct ListCheckRuns<'a> {
 }
 
 impl<'a> ListCheckRuns<'a> {
+    #[tracing::instrument]
     pub fn new(
         github_client: &'a GitHubClient<'a, CheckRun>,
         owner: &'a Login,
@@ -31,6 +33,7 @@ impl<'a> ListCheckRuns<'a> {
 
 #[async_trait]
 impl<'a> Action<CheckSuiteId, Vec<CheckRun>, ListCheckRunsError> for ListCheckRuns<'a> {
+    #[tracing::instrument]
     async fn execute(
         &self,
         check_suite_id: &CheckSuiteId,
