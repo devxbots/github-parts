@@ -20,6 +20,9 @@ pub struct GitHubClient {
 
 #[derive(Debug, thiserror::Error)]
 pub enum GitHubClientError {
+    #[error("failed to find the request resource")]
+    NotFound,
+
     #[error("{0}")]
     Request(#[from] reqwest::Error),
 
@@ -49,17 +52,10 @@ impl GitHubClient {
     where
         T: DeserializeOwned,
     {
-        let url = format!("{}{}", self.github_host.get(), endpoint);
+        // We need to explicitly declare the type of the body somewhere to silence a compiler error.
+        let body: Option<Value> = None;
 
-        let data = self
-            .client(Method::GET, &url)
-            .await?
-            .send()
-            .await?
-            .json::<T>()
-            .await?;
-
-        Ok(data)
+        self.send_request(Method::GET, endpoint, body).await
     }
 
     #[tracing::instrument(skip(body))]
@@ -71,7 +67,7 @@ impl GitHubClient {
     where
         T: DeserializeOwned,
     {
-        self.request_with_body(Method::POST, endpoint, body).await
+        self.send_request(Method::POST, endpoint, body).await
     }
 
     #[tracing::instrument(skip(body))]
@@ -83,7 +79,50 @@ impl GitHubClient {
     where
         T: DeserializeOwned,
     {
-        self.request_with_body(Method::PATCH, endpoint, body).await
+        self.send_request(Method::PATCH, endpoint, body).await
+    }
+
+    #[tracing::instrument(skip(body))]
+    async fn send_request<T>(
+        &mut self,
+        method: Method,
+        endpoint: &str,
+        body: Option<impl Serialize>,
+    ) -> Result<T, GitHubClientError>
+    where
+        T: DeserializeOwned,
+    {
+        let url = format!("{}{}", self.github_host.get(), endpoint);
+
+        let mut client = self.client(method.clone(), &url).await?;
+
+        if let Some(body) = body {
+            client = client.json(&body);
+        }
+
+        let response = client.send().await?;
+        let status = &response.status();
+
+        if !status.is_success() {
+            tracing::error!(
+                "failed to {} to GitHub: {:?}",
+                &method,
+                response.text().await?
+            );
+
+            return if status == &404 {
+                Err(GitHubClientError::NotFound)
+            } else {
+                Err(GitHubClientError::UnexpectedError(anyhow!(
+                    "failed to {} to GitHub",
+                    &method
+                )))
+            };
+        }
+
+        let data = response.json::<T>().await?;
+
+        Ok(data)
     }
 
     #[tracing::instrument]
@@ -177,43 +216,6 @@ impl GitHubClient {
         let link = String::from(&next_rel[link_start_position..link_end_position]);
 
         Ok(Some(link))
-    }
-
-    #[tracing::instrument(skip(body))]
-    async fn request_with_body<T>(
-        &mut self,
-        method: Method,
-        endpoint: &str,
-        body: Option<impl Serialize>,
-    ) -> Result<T, GitHubClientError>
-    where
-        T: DeserializeOwned,
-    {
-        let url = format!("{}{}", self.github_host.get(), endpoint);
-
-        let mut client = self.client(method.clone(), &url).await?;
-
-        if let Some(body) = body {
-            client = client.json(&body);
-        }
-
-        let response = client.send().await?;
-
-        if !response.status().is_success() {
-            tracing::error!(
-                "failed to {} to GitHub: {:?}",
-                &method,
-                response.text().await?
-            );
-            return Err(GitHubClientError::UnexpectedError(anyhow!(
-                "failed to {} to GitHub",
-                &method
-            )));
-        }
-
-        let data = response.json::<T>().await?;
-
-        Ok(data)
     }
 }
 

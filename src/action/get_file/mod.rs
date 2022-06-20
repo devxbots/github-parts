@@ -39,12 +39,8 @@ pub async fn get_file(
     let payload = match response {
         Ok(payload) => payload,
         Err(error) => {
-            if let GitHubClientError::Request(request_error) = &error {
-                if let Some(status) = request_error.status() {
-                    if status == 404 {
-                        return Err(GetFileError::NotFound);
-                    }
-                }
+            if let GitHubClientError::NotFound = &error {
+                return Err(GetFileError::NotFound);
             }
 
             return Err(anyhow!(error).into());
