@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-use std::marker::PhantomData;
 
 use anyhow::{anyhow, Context};
 use reqwest::header::HeaderValue;
@@ -13,11 +12,7 @@ use crate::github::{AppId, GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 
 #[derive(Clone, Debug)]
-pub struct GitHubClient<T>
-where
-    T: Debug,
-{
-    return_type: PhantomData<T>,
+pub struct GitHubClient {
     github_host: GitHubHost,
     token_factory: TokenFactory,
     installation_id: InstallationId,
@@ -32,10 +27,7 @@ pub enum GitHubClientError {
     UnexpectedError(#[from] anyhow::Error),
 }
 
-impl<T> GitHubClient<T>
-where
-    T: Debug + DeserializeOwned,
-{
+impl GitHubClient {
     #[tracing::instrument]
     pub fn new(
         github_host: GitHubHost,
@@ -46,7 +38,6 @@ where
         let token_factory = TokenFactory::new(github_host.clone(), app_id, private_key);
 
         Self {
-            return_type: PhantomData::default(),
             github_host,
             token_factory,
             installation_id,
@@ -54,7 +45,10 @@ where
     }
 
     #[tracing::instrument]
-    pub async fn get(&mut self, endpoint: &str) -> Result<T, GitHubClientError> {
+    pub async fn get<T>(&mut self, endpoint: &str) -> Result<T, GitHubClientError>
+    where
+        T: DeserializeOwned,
+    {
         let url = format!("{}{}", self.github_host.get(), endpoint);
 
         let data = self
@@ -69,30 +63,39 @@ where
     }
 
     #[tracing::instrument(skip(body))]
-    pub async fn post(
+    pub async fn post<T>(
         &mut self,
         endpoint: &str,
         body: Option<impl Serialize>,
-    ) -> Result<T, GitHubClientError> {
+    ) -> Result<T, GitHubClientError>
+    where
+        T: DeserializeOwned,
+    {
         self.request_with_body(Method::POST, endpoint, body).await
     }
 
     #[tracing::instrument(skip(body))]
-    pub async fn patch(
+    pub async fn patch<T>(
         &mut self,
         endpoint: &str,
         body: Option<impl Serialize>,
-    ) -> Result<T, GitHubClientError> {
+    ) -> Result<T, GitHubClientError>
+    where
+        T: DeserializeOwned,
+    {
         self.request_with_body(Method::PATCH, endpoint, body).await
     }
 
     #[tracing::instrument]
-    pub async fn paginate(
+    pub async fn paginate<T>(
         &mut self,
         method: Method,
         endpoint: &str,
         key: &str,
-    ) -> Result<Vec<T>, GitHubClientError> {
+    ) -> Result<Vec<T>, GitHubClientError>
+    where
+        T: DeserializeOwned,
+    {
         let url = format!("{}{}", self.github_host.get(), endpoint);
 
         let mut collection = Vec::new();
@@ -177,12 +180,15 @@ where
     }
 
     #[tracing::instrument(skip(body))]
-    async fn request_with_body(
+    async fn request_with_body<T>(
         &mut self,
         method: Method,
         endpoint: &str,
         body: Option<impl Serialize>,
-    ) -> Result<T, GitHubClientError> {
+    ) -> Result<T, GitHubClientError>
+    where
+        T: DeserializeOwned,
+    {
         let url = format!("{}{}", self.github_host.get(), endpoint);
 
         let mut client = self.client(method.clone(), &url).await?;
@@ -337,7 +343,7 @@ mod tests {
 
     #[test]
     fn get_next_url_returns_url() {
-        let client: GitHubClient<Repository> = GitHubClient::new(
+        let client = GitHubClient::new(
             GitHubHost::new(mockito::server_url()),
             AppId::new(1),
             PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
@@ -356,7 +362,7 @@ mod tests {
 
     #[test]
     fn get_next_url_returns_none() {
-        let client: GitHubClient<Repository> = GitHubClient::new(
+        let client = GitHubClient::new(
             GitHubHost::new(mockito::server_url()),
             AppId::new(1),
             PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
@@ -376,12 +382,12 @@ mod tests {
     #[test]
     fn trait_send() {
         fn assert_send<T: Send>() {}
-        assert_send::<GitHubClient<usize>>();
+        assert_send::<GitHubClient>();
     }
 
     #[test]
     fn trait_sync() {
         fn assert_sync<T: Sync>() {}
-        assert_sync::<GitHubClient<usize>>();
+        assert_sync::<GitHubClient>();
     }
 }

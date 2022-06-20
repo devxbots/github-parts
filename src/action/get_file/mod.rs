@@ -25,8 +25,7 @@ pub async fn get_file(
     repository: &RepositoryName,
     path: &str,
 ) -> Result<GetFileResult, GetFileError> {
-    let mut client: GitHubClient<GetFileResponse> =
-        GitHubClient::new(github_host, app_id, private_key, installation);
+    let mut client = GitHubClient::new(github_host, app_id, private_key, installation);
 
     let url = format!(
         "/repos/{}/{}/contents/{}",
