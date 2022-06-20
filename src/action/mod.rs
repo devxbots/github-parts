@@ -15,5 +15,5 @@ where
     Output: DeserializeOwned,
     Error: std::error::Error,
 {
-    async fn execute(&self, input: &Input) -> Result<Output, Error>;
+    async fn execute(&mut self, input: &Input) -> Result<Output, Error>;
 }

@@ -17,15 +17,15 @@ mod result;
 
 #[tracing::instrument]
 pub async fn get_file(
-    github_host: &GitHubHost,
+    github_host: GitHubHost,
     app_id: AppId,
-    private_key: &PrivateKey,
+    private_key: PrivateKey,
     installation: InstallationId,
     owner: &Login,
     repository: &RepositoryName,
     path: &str,
 ) -> Result<GetFileResult, GetFileError> {
-    let client: GitHubClient<GetFileResponse> =
+    let mut client: GitHubClient<GetFileResponse> =
         GitHubClient::new(github_host, app_id, private_key, installation);
 
     let url = format!(
@@ -108,9 +108,9 @@ mod tests {
             "#).create();
 
         let file = get_file(
-            &GitHubHost::new(mockito::server_url()),
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
+            PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
@@ -169,9 +169,9 @@ mod tests {
             "#).create();
 
         let error = get_file(
-            &GitHubHost::new(mockito::server_url()),
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
+            PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
@@ -212,9 +212,9 @@ mod tests {
             "#).create();
 
         let error = get_file(
-            &GitHubHost::new(mockito::server_url()),
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
+            PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
             &Login::new("octokit"),
             &RepositoryName::new("octokit.rb"),
@@ -255,9 +255,9 @@ mod tests {
             "#).create();
 
         let error = get_file(
-            &GitHubHost::new(mockito::server_url()),
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
+            PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
             &Login::new("jquery"),
             &RepositoryName::new("jquery"),
@@ -285,9 +285,9 @@ mod tests {
             "#).create();
 
         let error = get_file(
-            &GitHubHost::new(mockito::server_url()),
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
+            PrivateKey::new(include_str!("../../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
             &Login::new("devxbots"),
             &RepositoryName::new("github-parts"),

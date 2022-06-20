@@ -8,19 +8,18 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::github::token::{AppToken, InstallationToken};
+use crate::github::token::TokenFactory;
 use crate::github::{AppId, GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 
 #[derive(Clone, Debug)]
-pub struct GitHubClient<'a, T>
+pub struct GitHubClient<T>
 where
     T: Debug,
 {
     return_type: PhantomData<T>,
-    github_host: &'a GitHubHost,
-    app_id: AppId,
-    private_key: &'a PrivateKey,
+    github_host: GitHubHost,
+    token_factory: TokenFactory,
     installation_id: InstallationId,
 }
 
@@ -33,28 +32,29 @@ pub enum GitHubClientError {
     UnexpectedError(#[from] anyhow::Error),
 }
 
-impl<'a, T> GitHubClient<'a, T>
+impl<T> GitHubClient<T>
 where
     T: Debug + DeserializeOwned,
 {
     #[tracing::instrument]
     pub fn new(
-        github_host: &'a GitHubHost,
+        github_host: GitHubHost,
         app_id: AppId,
-        private_key: &'a PrivateKey,
+        private_key: PrivateKey,
         installation_id: InstallationId,
     ) -> Self {
+        let token_factory = TokenFactory::new(github_host.clone(), app_id, private_key);
+
         Self {
             return_type: PhantomData::default(),
             github_host,
-            app_id,
-            private_key,
+            token_factory,
             installation_id,
         }
     }
 
     #[tracing::instrument]
-    pub async fn get(&self, endpoint: &str) -> Result<T, GitHubClientError> {
+    pub async fn get(&mut self, endpoint: &str) -> Result<T, GitHubClientError> {
         let url = format!("{}{}", self.github_host.get(), endpoint);
 
         let data = self
@@ -70,7 +70,7 @@ where
 
     #[tracing::instrument(skip(body))]
     pub async fn post(
-        &self,
+        &mut self,
         endpoint: &str,
         body: Option<impl Serialize>,
     ) -> Result<T, GitHubClientError> {
@@ -79,7 +79,7 @@ where
 
     #[tracing::instrument(skip(body))]
     pub async fn patch(
-        &self,
+        &mut self,
         endpoint: &str,
         body: Option<impl Serialize>,
     ) -> Result<T, GitHubClientError> {
@@ -88,7 +88,7 @@ where
 
     #[tracing::instrument]
     pub async fn paginate(
-        &self,
+        &mut self,
         method: Method,
         endpoint: &str,
         key: &str,
@@ -123,8 +123,16 @@ where
     }
 
     #[tracing::instrument]
-    async fn client(&self, method: Method, url: &str) -> Result<RequestBuilder, GitHubClientError> {
-        let token = self.token().await?;
+    async fn client(
+        &mut self,
+        method: Method,
+        url: &str,
+    ) -> Result<RequestBuilder, GitHubClientError> {
+        let token = self
+            .token_factory
+            .installation(self.installation_id)
+            .await
+            .context("failed to get authentication token from factory")?;
 
         let client = Client::new()
             .request(method, url)
@@ -133,19 +141,6 @@ where
             .header("User-Agent", "devxbots/github-parts");
 
         Ok(client)
-    }
-
-    #[tracing::instrument]
-    async fn token(&self) -> Result<InstallationToken, GitHubClientError> {
-        let app_token = AppToken::new(&self.app_id, self.private_key)
-            .context("failed to create GitHub App token")?;
-
-        let installation_token =
-            InstallationToken::new(self.github_host, &app_token, &self.installation_id)
-                .await
-                .context("failed to create GitHub installation token")?;
-
-        Ok(installation_token)
     }
 
     #[tracing::instrument]
@@ -183,7 +178,7 @@ where
 
     #[tracing::instrument(skip(body))]
     async fn request_with_body(
-        &self,
+        &mut self,
         method: Method,
         endpoint: &str,
         body: Option<impl Serialize>,
@@ -253,17 +248,14 @@ mod tests {
             )
             .create();
 
-        let github_host = GitHubHost::new(mockito::server_url());
-        let private_key =
-            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
-        let client: GitHubClient<Repository> = GitHubClient::new(
-            &github_host,
+        let mut client = GitHubClient::new(
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &private_key,
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
         );
 
-        let repository = client.get("/repos/octocat/Hello-World").await.unwrap();
+        let repository: Repository = client.get("/repos/octocat/Hello-World").await.unwrap();
 
         assert_eq!(1296269, repository.id().get());
     }
@@ -328,17 +320,14 @@ mod tests {
             )
             .create();
 
-        let github_host = GitHubHost::new(mockito::server_url());
-        let private_key =
-            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
-        let client: GitHubClient<Repository> = GitHubClient::new(
-            &github_host,
+        let mut client = GitHubClient::new(
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &private_key,
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
         );
 
-        let repository = client
+        let repository: Vec<Repository> = client
             .paginate(Method::GET, "/installation/repositories", "repositories")
             .await
             .unwrap();
@@ -348,13 +337,10 @@ mod tests {
 
     #[test]
     fn get_next_url_returns_url() {
-        let github_host = GitHubHost::new(mockito::server_url());
-        let private_key =
-            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
         let client: GitHubClient<Repository> = GitHubClient::new(
-            &github_host,
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &private_key,
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
         );
 
@@ -370,13 +356,10 @@ mod tests {
 
     #[test]
     fn get_next_url_returns_none() {
-        let github_host = GitHubHost::new(mockito::server_url());
-        let private_key =
-            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
         let client: GitHubClient<Repository> = GitHubClient::new(
-            &github_host,
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &private_key,
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
         );
 

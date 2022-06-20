@@ -9,9 +9,9 @@ use crate::check_suite::CheckSuiteId;
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct ListCheckRuns<'a> {
-    github_client: &'a GitHubClient<'a, CheckRun>,
+    github_client: GitHubClient<CheckRun>,
     owner: &'a Login,
     repository: &'a RepositoryName,
 }
@@ -19,7 +19,7 @@ pub struct ListCheckRuns<'a> {
 impl<'a> ListCheckRuns<'a> {
     #[tracing::instrument]
     pub fn new(
-        github_client: &'a GitHubClient<'a, CheckRun>,
+        github_client: GitHubClient<CheckRun>,
         owner: &'a Login,
         repository: &'a RepositoryName,
     ) -> Self {
@@ -35,7 +35,7 @@ impl<'a> ListCheckRuns<'a> {
 impl<'a> Action<CheckSuiteId, Vec<CheckRun>, ListCheckRunsError> for ListCheckRuns<'a> {
     #[tracing::instrument]
     async fn execute(
-        &self,
+        &mut self,
         check_suite_id: &CheckSuiteId,
     ) -> Result<Vec<CheckRun>, ListCheckRunsError> {
         let url = format!(
@@ -181,19 +181,16 @@ mod tests {
                 }
             "#).create();
 
-        let github_host = GitHubHost::new(mockito::server_url());
-        let private_key =
-            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
         let github_client = GitHubClient::new(
-            &github_host,
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &private_key,
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
         );
         let owner = Login::new("github");
         let repository = RepositoryName::new("hello-world");
 
-        let check_runs = ListCheckRuns::new(&github_client, &owner, &repository)
+        let check_runs = ListCheckRuns::new(github_client, &owner, &repository)
             .execute(&CheckSuiteId::new(5))
             .await
             .unwrap();
