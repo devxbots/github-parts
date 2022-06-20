@@ -10,9 +10,9 @@ use crate::git::HeadSha;
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct CreateCheckRun<'a> {
-    github_client: &'a GitHubClient<'a, CheckRun>,
+    github_client: GitHubClient<CheckRun>,
     owner: &'a Login,
     repository: &'a RepositoryName,
 }
@@ -20,7 +20,7 @@ pub struct CreateCheckRun<'a> {
 impl<'a> CreateCheckRun<'a> {
     #[tracing::instrument]
     pub fn new(
-        github_client: &'a GitHubClient<'a, CheckRun>,
+        github_client: GitHubClient<CheckRun>,
         owner: &'a Login,
         repository: &'a RepositoryName,
     ) -> Self {
@@ -35,7 +35,10 @@ impl<'a> CreateCheckRun<'a> {
 #[async_trait]
 impl<'a> Action<CreateCheckRunInput, CheckRun, CreateCheckRunError> for CreateCheckRun<'a> {
     #[tracing::instrument]
-    async fn execute(&self, input: &CreateCheckRunInput) -> Result<CheckRun, CreateCheckRunError> {
+    async fn execute(
+        &mut self,
+        input: &CreateCheckRunInput,
+    ) -> Result<CheckRun, CreateCheckRunError> {
         let url = format!(
             "/repos/{}/{}/check-runs",
             self.owner.get(),
@@ -186,13 +189,10 @@ mod tests {
                 }
             "#).create();
 
-        let github_host = GitHubHost::new(mockito::server_url());
-        let private_key =
-            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into());
         let github_client = GitHubClient::new(
-            &github_host,
+            GitHubHost::new(mockito::server_url()),
             AppId::new(1),
-            &private_key,
+            PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
             InstallationId::new(1),
         );
         let owner = Login::new("github");
@@ -206,7 +206,7 @@ mod tests {
             completed_at: None,
         };
 
-        let check_run = CreateCheckRun::new(&github_client, &owner, &repository)
+        let check_run = CreateCheckRun::new(github_client, &owner, &repository)
             .execute(&input)
             .await
             .unwrap();
