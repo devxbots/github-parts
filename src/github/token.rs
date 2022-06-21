@@ -31,7 +31,7 @@ impl<Scope> Token<Scope> {
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct TokenFactory {
+pub struct TokenFactory {
     github_host: GitHubHost,
     app_id: AppId,
     private_key: PrivateKey,
