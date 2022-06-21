@@ -1,8 +1,11 @@
 use std::marker::PhantomData;
+use std::ops::Sub;
+use std::sync::Arc;
 
 use anyhow::Context;
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use parking_lot::Mutex;
 use reqwest::Client;
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
@@ -35,27 +38,41 @@ pub struct TokenFactory {
     github_host: GitHubHost,
     app_id: AppId,
     private_key: PrivateKey,
-    app_token: Option<Token<App>>,
-    installation_token: Option<Token<Installation>>,
+    app_token: Arc<Mutex<Token<App>>>,
+    installation_token: Arc<Mutex<Token<Installation>>>,
 }
 
 impl TokenFactory {
     pub fn new(github_host: GitHubHost, app_id: AppId, private_key: PrivateKey) -> Self {
+        let expiration = Utc::now().sub(Duration::days(1));
+
+        let expired_app_token = Token {
+            scope: PhantomData,
+            token: SecretString::new("app_token".into()),
+            expires_at: expiration,
+        };
+        let expired_installation_token = Token {
+            scope: PhantomData,
+            token: SecretString::new("installation_token".into()),
+            expires_at: expiration,
+        };
+
         Self {
             github_host,
             app_id,
             private_key,
-            app_token: None,
-            installation_token: None,
+            app_token: Arc::new(Mutex::new(expired_app_token)),
+            installation_token: Arc::new(Mutex::new(expired_installation_token)),
         }
     }
 
-    pub fn app(&mut self) -> Result<Token<App>, Error> {
+    pub fn app(&self) -> Result<Token<App>, Error> {
         let now = Utc::now();
 
-        if let Some(token) = &self.app_token {
-            if token.expires_at > now {
-                return Ok(token.clone());
+        {
+            let app_token = self.app_token.lock();
+            if app_token.expires_at > now {
+                return Ok(app_token.clone());
             }
         }
 
@@ -66,20 +83,24 @@ impl TokenFactory {
             expires_at: now,
         };
 
-        self.app_token = Some(token.clone());
+        {
+            let mut app_token = self.app_token.lock();
+            *app_token = token.clone();
+        }
 
         Ok(token)
     }
 
     pub async fn installation(
-        &mut self,
+        &self,
         installation_id: InstallationId,
     ) -> Result<Token<Installation>, Error> {
         let now = Utc::now();
 
-        if let Some(token) = &self.installation_token {
-            if token.expires_at > now {
-                return Ok(token.clone());
+        {
+            let installation_token = self.installation_token.lock();
+            if installation_token.expires_at > now {
+                return Ok(installation_token.clone());
             }
         }
 
@@ -106,7 +127,10 @@ impl TokenFactory {
             expires_at: now,
         };
 
-        self.installation_token = Some(token.clone());
+        {
+            let mut installation_token = self.installation_token.lock();
+            *installation_token = token.clone();
+        }
 
         Ok(token)
     }
@@ -157,9 +181,11 @@ struct AccessTokensResponse {
 mod tests {
     use std::marker::PhantomData;
     use std::ops::{Add, Sub};
+    use std::sync::Arc;
 
     use chrono::{Duration, Utc};
     use mockito::mock;
+    use parking_lot::Mutex;
     use secrecy::SecretString;
 
     use crate::github::{AppId, GitHubHost, PrivateKey};
@@ -171,14 +197,33 @@ mod tests {
         app_token: Option<Token<App>>,
         installation_token: Option<Token<Installation>>,
     ) -> TokenFactory {
+        let expiration = Utc::now().sub(Duration::days(1));
+
+        let app_token = match app_token {
+            Some(token) => token,
+            None => Token {
+                scope: PhantomData,
+                token: SecretString::new("app_token".into()),
+                expires_at: expiration,
+            },
+        };
+        let installation_token = match installation_token {
+            Some(token) => token,
+            None => Token {
+                scope: PhantomData,
+                token: SecretString::new("installation_token".into()),
+                expires_at: expiration,
+            },
+        };
+
         TokenFactory {
             github_host: GitHubHost::new(mockito::server_url()),
             app_id: AppId::new(1),
             private_key: PrivateKey::new(
                 include_str!("../../tests/fixtures/private-key.pem").into(),
             ),
-            app_token,
-            installation_token,
+            app_token: Arc::new(Mutex::new(app_token)),
+            installation_token: Arc::new(Mutex::new(installation_token)),
         }
     }
 
@@ -189,7 +234,7 @@ mod tests {
             token: SecretString::new("app".into()),
             expires_at: Utc::now().add(Duration::minutes(10)),
         };
-        let mut factory = factory(Some(token.clone()), None);
+        let factory = factory(Some(token.clone()), None);
 
         let new_token = factory.app().unwrap();
 
@@ -203,7 +248,7 @@ mod tests {
             token: SecretString::new("app".into()),
             expires_at: Utc::now().sub(Duration::minutes(10)),
         };
-        let mut factory = factory(Some(token.clone()), None);
+        let factory = factory(Some(token.clone()), None);
 
         let new_token = factory.app().unwrap();
 
@@ -217,7 +262,7 @@ mod tests {
             token: SecretString::new("installation".into()),
             expires_at: Utc::now().add(Duration::minutes(10)),
         };
-        let mut factory = factory(None, Some(token.clone()));
+        let factory = factory(None, Some(token.clone()));
 
         let new_token = factory.installation(InstallationId::new(1)).await.unwrap();
 
@@ -241,7 +286,7 @@ mod tests {
             token: SecretString::new("installation".into()),
             expires_at: Utc::now().add(Duration::minutes(10)),
         };
-        let mut factory = factory(Some(app_token.clone()), Some(installation_token));
+        let factory = factory(Some(app_token.clone()), Some(installation_token));
 
         let new_token = factory.installation(InstallationId::new(1)).await.unwrap();
 

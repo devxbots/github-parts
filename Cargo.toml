@@ -29,6 +29,7 @@ base64 = "0.13.0"
 chrono = { version = "0.4.19", features = ["serde"] }
 getset = "0.1.2"
 jsonwebtoken = "8.1.0"
+parking_lot = "0.12.1"
 reqwest = { version = "0.11.10", features = ["json"] }
 secrecy = "0.8.0"
 serde = { version = "1.0.137", features = ["derive"] }
