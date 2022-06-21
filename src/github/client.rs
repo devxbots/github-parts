@@ -48,7 +48,7 @@ impl GitHubClient {
     }
 
     #[tracing::instrument]
-    pub async fn get<T>(&mut self, endpoint: &str) -> Result<T, GitHubClientError>
+    pub async fn get<T>(&self, endpoint: &str) -> Result<T, GitHubClientError>
     where
         T: DeserializeOwned,
     {
@@ -60,7 +60,7 @@ impl GitHubClient {
 
     #[tracing::instrument(skip(body))]
     pub async fn post<T>(
-        &mut self,
+        &self,
         endpoint: &str,
         body: Option<impl Serialize>,
     ) -> Result<T, GitHubClientError>
@@ -72,7 +72,7 @@ impl GitHubClient {
 
     #[tracing::instrument(skip(body))]
     pub async fn patch<T>(
-        &mut self,
+        &self,
         endpoint: &str,
         body: Option<impl Serialize>,
     ) -> Result<T, GitHubClientError>
@@ -84,7 +84,7 @@ impl GitHubClient {
 
     #[tracing::instrument(skip(body))]
     async fn send_request<T>(
-        &mut self,
+        &self,
         method: Method,
         endpoint: &str,
         body: Option<impl Serialize>,
@@ -127,7 +127,7 @@ impl GitHubClient {
 
     #[tracing::instrument]
     pub async fn paginate<T>(
-        &mut self,
+        &self,
         method: Method,
         endpoint: &str,
         key: &str,
@@ -165,11 +165,7 @@ impl GitHubClient {
     }
 
     #[tracing::instrument]
-    async fn client(
-        &mut self,
-        method: Method,
-        url: &str,
-    ) -> Result<RequestBuilder, GitHubClientError> {
+    async fn client(&self, method: Method, url: &str) -> Result<RequestBuilder, GitHubClientError> {
         let token = self
             .token_factory
             .installation(self.installation_id)
@@ -256,7 +252,7 @@ mod tests {
             )
             .create();
 
-        let mut client = GitHubClient::new(
+        let client = GitHubClient::new(
             GitHubHost::new(mockito::server_url()),
             AppId::new(1),
             PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
@@ -328,7 +324,7 @@ mod tests {
             )
             .create();
 
-        let mut client = GitHubClient::new(
+        let client = GitHubClient::new(
             GitHubHost::new(mockito::server_url()),
             AppId::new(1),
             PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),

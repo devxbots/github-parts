@@ -11,7 +11,7 @@ use crate::repository::RepositoryName;
 
 #[derive(Debug)]
 pub struct ListCheckRuns<'a> {
-    github_client: &'a mut GitHubClient,
+    github_client: &'a GitHubClient,
     owner: &'a Login,
     repository: &'a RepositoryName,
 }
@@ -19,7 +19,7 @@ pub struct ListCheckRuns<'a> {
 impl<'a> ListCheckRuns<'a> {
     #[tracing::instrument]
     pub fn new(
-        github_client: &'a mut GitHubClient,
+        github_client: &'a GitHubClient,
         owner: &'a Login,
         repository: &'a RepositoryName,
     ) -> Self {
@@ -181,7 +181,7 @@ mod tests {
                 }
             "#).create();
 
-        let mut github_client = GitHubClient::new(
+        let github_client = GitHubClient::new(
             GitHubHost::new(mockito::server_url()),
             AppId::new(1),
             PrivateKey::new(include_str!("../../tests/fixtures/private-key.pem").into()),
@@ -190,7 +190,7 @@ mod tests {
         let owner = Login::new("github");
         let repository = RepositoryName::new("hello-world");
 
-        let check_runs = ListCheckRuns::new(&mut github_client, &owner, &repository)
+        let check_runs = ListCheckRuns::new(&github_client, &owner, &repository)
             .execute(&CheckSuiteId::new(5))
             .await
             .unwrap();
