@@ -1,5 +1,6 @@
 use anyhow::Context;
 use async_trait::async_trait;
+use derive_new::new;
 use reqwest::Method;
 
 use crate::account::Login;
@@ -9,26 +10,11 @@ use crate::check_suite::CheckSuiteId;
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct ListCheckRuns<'a> {
     github_client: &'a GitHubClient,
     owner: &'a Login,
     repository: &'a RepositoryName,
-}
-
-impl<'a> ListCheckRuns<'a> {
-    #[tracing::instrument]
-    pub fn new(
-        github_client: &'a GitHubClient,
-        owner: &'a Login,
-        repository: &'a RepositoryName,
-    ) -> Self {
-        Self {
-            github_client,
-            owner,
-            repository,
-        }
-    }
 }
 
 #[async_trait]

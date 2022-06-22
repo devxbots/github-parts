@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 
+use derive_new::new;
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +21,18 @@ id!(CheckRunId);
 name!(CheckRunName);
 
 #[derive(
-    Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters, Getters,
+    Clone,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Debug,
+    Deserialize,
+    Serialize,
+    CopyGetters,
+    Getters,
+    new,
 )]
 pub struct CheckRun {
     #[getset(get_copy = "pub")]

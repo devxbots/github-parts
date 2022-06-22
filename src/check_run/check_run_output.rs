@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 
+use derive_new::new;
 use getset::Getters;
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +9,9 @@ use crate::name;
 name!(CheckRunOutputTitle);
 name!(CheckRunOutputSummary);
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, Getters)]
+#[derive(
+    Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, Getters, new,
+)]
 pub struct CheckRunOutput {
     /// The title of the check run.
     #[getset(get = "pub")]

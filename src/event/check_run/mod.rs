@@ -1,3 +1,4 @@
+use derive_new::new;
 use getset::Getters;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +11,9 @@ pub use self::action::Action;
 
 mod action;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, Getters)]
+#[derive(
+    Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, Getters, new,
+)]
 pub struct CheckRunEvent {
     #[getset(get = "pub")]
     action: Action,
@@ -29,26 +32,6 @@ pub struct CheckRunEvent {
 
     #[getset(get = "pub")]
     sender: Account,
-}
-
-impl CheckRunEvent {
-    pub fn new(
-        action: Action,
-        check_run: CheckRun,
-        repository: Repository,
-        organization: Option<Organization>,
-        installation: Option<Installation>,
-        sender: Account,
-    ) -> Self {
-        Self {
-            action,
-            check_run,
-            repository,
-            organization,
-            installation,
-            sender,
-        }
-    }
 }
 
 #[cfg(test)]

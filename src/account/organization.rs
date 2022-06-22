@@ -1,12 +1,24 @@
 use std::fmt::{Display, Formatter};
 
+use derive_new::new;
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
 use crate::account::{AccountId, Login};
 
 #[derive(
-    Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters, Getters,
+    Clone,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Debug,
+    Deserialize,
+    Serialize,
+    CopyGetters,
+    Getters,
+    new,
 )]
 pub struct Organization {
     #[getset(get = "pub")]
@@ -14,12 +26,6 @@ pub struct Organization {
 
     #[getset(get_copy = "pub")]
     id: AccountId,
-}
-
-impl Organization {
-    pub fn new(login: Login, id: AccountId) -> Self {
-        Self { login, id }
-    }
 }
 
 impl Display for Organization {

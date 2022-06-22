@@ -14,7 +14,7 @@ pub enum GetFileResponse {
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "type")]
-pub enum GetFilePayload {
+pub(super) enum GetFilePayload {
     Directory,
     File(FilePayload),
     Submodule,
@@ -22,7 +22,7 @@ pub enum GetFilePayload {
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize)]
-pub struct FilePayload {
+pub(super) struct FilePayload {
     encoding: FileEncoding,
     size: u64,
     name: String,
