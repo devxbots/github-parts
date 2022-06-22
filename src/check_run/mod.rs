@@ -9,9 +9,11 @@ use crate::github::app::App;
 use crate::{id, name};
 
 pub use self::check_run_conclusion::CheckRunConclusion;
+pub use self::check_run_output::CheckRunOutput;
 pub use self::check_run_status::CheckRunStatus;
 
 mod check_run_conclusion;
+mod check_run_output;
 mod check_run_status;
 
 id!(CheckRunId);
