@@ -10,7 +10,7 @@ use crate::github::app::App;
 use crate::{id, name};
 
 pub use self::check_run_conclusion::CheckRunConclusion;
-pub use self::check_run_output::CheckRunOutput;
+pub use self::check_run_output::{CheckRunOutput, CheckRunOutputSummary, CheckRunOutputTitle};
 pub use self::check_run_status::CheckRunStatus;
 
 mod check_run_conclusion;
