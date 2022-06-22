@@ -44,6 +44,7 @@ pub struct TokenFactory {
 }
 
 impl TokenFactory {
+    #[tracing::instrument]
     pub fn new(github_host: GitHubHost, app_id: AppId, private_key: PrivateKey) -> Self {
         let expiration = Utc::now().sub(Duration::days(1));
 
@@ -67,6 +68,7 @@ impl TokenFactory {
         }
     }
 
+    #[tracing::instrument]
     pub fn app(&self) -> Result<Token<App>, Error> {
         let now = Utc::now();
 
@@ -92,6 +94,7 @@ impl TokenFactory {
         Ok(token)
     }
 
+    #[tracing::instrument]
     pub async fn installation(
         &self,
         installation_id: InstallationId,
@@ -136,6 +139,7 @@ impl TokenFactory {
         Ok(token)
     }
 
+    #[tracing::instrument]
     fn generate_jwt(&self) -> Result<String, Error> {
         let now = Utc::now();
 
