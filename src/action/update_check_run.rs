@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use crate::account::Login;
 use crate::action::Action;
-use crate::check_run::{CheckRun, CheckRunConclusion, CheckRunId, CheckRunStatus};
+use crate::check_run::{CheckRun, CheckRunConclusion, CheckRunId, CheckRunOutput, CheckRunStatus};
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
@@ -67,6 +67,8 @@ pub struct UpdateCheckRunInput {
     pub conclusion: Option<CheckRunConclusion>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub completed_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub output: Option<CheckRunOutput>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -101,6 +103,7 @@ mod tests {
             status: Some(CheckRunStatus::Completed),
             conclusion: Some(CheckRunConclusion::Neutral),
             completed_at: None,
+            output: None,
         };
 
         let check_run = UpdateCheckRun::new(&github_client, &owner, &repository, check_run_id)
