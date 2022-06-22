@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::check_suite::CheckSuite;
 use crate::git::HeadSha;
+use crate::github::app::App;
 use crate::{id, name};
 
 pub use self::check_run_conclusion::CheckRunConclusion;
@@ -31,6 +32,9 @@ pub struct CheckRun {
 
     #[getset(get = "pub")]
     check_suite: CheckSuite,
+
+    #[getset(get = "pub")]
+    app: App,
 
     #[getset(get_copy = "pub")]
     status: CheckRunStatus,
