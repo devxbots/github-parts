@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 
+use derive_new::new;
 use getset::CopyGetters;
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +10,18 @@ use crate::id;
 id!(CheckSuiteId);
 
 #[derive(
-    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters,
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Debug,
+    Deserialize,
+    Serialize,
+    CopyGetters,
+    new,
 )]
 pub struct CheckSuite {
     #[getset(get_copy = "pub")]

@@ -1,6 +1,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use derive_new::new;
 use serde::Serialize;
 
 use crate::account::Login;
@@ -9,29 +10,12 @@ use crate::check_run::{CheckRun, CheckRunConclusion, CheckRunId, CheckRunOutput,
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct UpdateCheckRun<'a> {
     github_client: &'a GitHubClient,
     owner: &'a Login,
     repository: &'a RepositoryName,
     check_run_id: CheckRunId,
-}
-
-impl<'a> UpdateCheckRun<'a> {
-    #[tracing::instrument]
-    pub fn new(
-        github_client: &'a GitHubClient,
-        owner: &'a Login,
-        repository: &'a RepositoryName,
-        check_run_id: CheckRunId,
-    ) -> Self {
-        Self {
-            github_client,
-            owner,
-            repository,
-            check_run_id,
-        }
-    }
 }
 
 #[async_trait]
@@ -59,16 +43,16 @@ impl<'a> Action<UpdateCheckRunInput, CheckRun, UpdateCheckRunError> for UpdateCh
 }
 
 // TODO: Pass by reference, not by value (e.g. &HeadSha)
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, new)]
 pub struct UpdateCheckRunInput {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<CheckRunStatus>,
+    status: Option<CheckRunStatus>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub conclusion: Option<CheckRunConclusion>,
+    conclusion: Option<CheckRunConclusion>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub completed_at: Option<DateTime<Utc>>,
+    completed_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub output: Option<CheckRunOutput>,
+    output: Option<CheckRunOutput>,
 }
 
 #[derive(Debug, thiserror::Error)]

@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 
+use derive_new::new;
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +12,18 @@ id!(RepositoryId);
 name!(RepositoryName);
 
 #[derive(
-    Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize, CopyGetters, Getters,
+    Clone,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Debug,
+    Deserialize,
+    Serialize,
+    CopyGetters,
+    Getters,
+    new,
 )]
 pub struct Repository {
     #[getset(get_copy = "pub")]
@@ -31,22 +43,6 @@ pub struct Repository {
 }
 
 impl Repository {
-    pub fn new(
-        id: RepositoryId,
-        name: RepositoryName,
-        description: Option<String>,
-        owner: Account,
-        visibility: Visibility,
-    ) -> Self {
-        Self {
-            id,
-            name,
-            description,
-            owner,
-            visibility,
-        }
-    }
-
     pub fn full_name(&self) -> String {
         format!("{}/{}", self.owner.login(), self.name())
     }

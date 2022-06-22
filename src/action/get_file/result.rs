@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use derive_new::new;
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 
@@ -16,6 +17,7 @@ use serde::{Deserialize, Serialize};
     Serialize,
     CopyGetters,
     Getters,
+    new,
 )]
 pub struct GetFileResult {
     #[getset(get_copy = "pub")]

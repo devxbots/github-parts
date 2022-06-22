@@ -1,6 +1,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use derive_new::new;
 use serde::Serialize;
 
 use crate::account::Login;
@@ -10,26 +11,11 @@ use crate::git::HeadSha;
 use crate::github::client::GitHubClient;
 use crate::repository::RepositoryName;
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct CreateCheckRun<'a> {
     github_client: &'a GitHubClient,
     owner: &'a Login,
     repository: &'a RepositoryName,
-}
-
-impl<'a> CreateCheckRun<'a> {
-    #[tracing::instrument]
-    pub fn new(
-        github_client: &'a GitHubClient,
-        owner: &'a Login,
-        repository: &'a RepositoryName,
-    ) -> Self {
-        Self {
-            github_client,
-            owner,
-            repository,
-        }
-    }
 }
 
 #[async_trait]
