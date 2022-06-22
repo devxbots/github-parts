@@ -1,5 +1,6 @@
+use crate::github::app::AppId;
 use crate::github::client::GitHubClient;
-use crate::github::{AppId, GitHubHost, PrivateKey};
+use crate::github::{GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 
 pub fn github_client() -> GitHubClient {

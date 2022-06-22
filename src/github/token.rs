@@ -11,7 +11,8 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
-use crate::github::{AppId, GitHubHost, PrivateKey};
+use crate::github::app::AppId;
+use crate::github::{GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
@@ -188,7 +189,8 @@ mod tests {
     use parking_lot::Mutex;
     use secrecy::SecretString;
 
-    use crate::github::{AppId, GitHubHost, PrivateKey};
+    use crate::github::app::AppId;
+    use crate::github::{GitHubHost, PrivateKey};
     use crate::installation::InstallationId;
 
     use super::{App, Installation, Token, TokenFactory};

@@ -7,8 +7,9 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::github::app::AppId;
 use crate::github::token::TokenFactory;
-use crate::github::{AppId, GitHubHost, PrivateKey};
+use crate::github::{GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 
 #[derive(Clone, Debug)]
@@ -221,7 +222,8 @@ mod tests {
     use reqwest::header::HeaderValue;
     use reqwest::Method;
 
-    use crate::github::{AppId, GitHubHost, PrivateKey};
+    use crate::github::app::AppId;
+    use crate::github::{GitHubHost, PrivateKey};
     use crate::installation::InstallationId;
     use crate::repository::Repository;
 

@@ -2,8 +2,9 @@ use anyhow::{anyhow, Context};
 
 use crate::account::Login;
 use crate::action::get_file::payload::GetFileResponse;
+use crate::github::app::AppId;
 use crate::github::client::{GitHubClient, GitHubClientError};
-use crate::github::{AppId, GitHubHost, PrivateKey};
+use crate::github::{GitHubHost, PrivateKey};
 use crate::installation::InstallationId;
 use crate::repository::RepositoryName;
 
@@ -67,7 +68,8 @@ mod tests {
     use mockito::mock;
 
     use crate::account::Login;
-    use crate::github::{AppId, GitHubHost, PrivateKey};
+    use crate::github::app::AppId;
+    use crate::github::{GitHubHost, PrivateKey};
     use crate::installation::InstallationId;
     use crate::repository::RepositoryName;
 
