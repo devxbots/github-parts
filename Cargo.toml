@@ -1,6 +1,6 @@
 [package]
 name = "github-parts"
-version = "0.7.1"
+version = "0.8.0"
 edition = "2021"
 
 description = "Types and actions to interact with GitHub"
