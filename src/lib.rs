@@ -11,3 +11,6 @@ pub mod github;
 pub mod installation;
 pub mod repository;
 pub mod visibility;
+
+#[cfg(test)]
+pub mod testing;
