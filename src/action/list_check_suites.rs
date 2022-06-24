@@ -20,7 +20,7 @@ pub struct ListCheckSuites<'a> {
 #[async_trait]
 impl<'a> Action<HeadSha, Vec<CheckSuite>, ListCheckRunsError> for ListCheckSuites<'a> {
     #[tracing::instrument]
-    async fn execute(&self, head_sha: &HeadSha) -> Result<Vec<CheckSuite>, ListCheckRunsError> {
+    async fn execute(&self, head_sha: HeadSha) -> Result<Vec<CheckSuite>, ListCheckRunsError> {
         let url = format!(
             "/repos/{}/{}/commits/{}/check-suites",
             self.owner.get(),
@@ -66,7 +66,7 @@ mod tests {
         let repository = RepositoryName::new("hello-world");
 
         let check_runs = ListCheckSuites::new(&github_client, &owner, &repository)
-            .execute(&HeadSha::new("d6fde92930d4715a2b49857d24b940956b26d2d3"))
+            .execute(HeadSha::new("d6fde92930d4715a2b49857d24b940956b26d2d3"))
             .await
             .unwrap();
 
