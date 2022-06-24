@@ -21,10 +21,7 @@ pub struct UpdateCheckRun<'a> {
 #[async_trait]
 impl<'a> Action<UpdateCheckRunInput, CheckRun, UpdateCheckRunError> for UpdateCheckRun<'a> {
     #[tracing::instrument]
-    async fn execute(
-        &mut self,
-        input: &UpdateCheckRunInput,
-    ) -> Result<CheckRun, UpdateCheckRunError> {
+    async fn execute(&self, input: &UpdateCheckRunInput) -> Result<CheckRun, UpdateCheckRunError> {
         let url = format!(
             "/repos/{}/{}/check-runs/{}",
             self.owner.get(),

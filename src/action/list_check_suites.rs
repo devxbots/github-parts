@@ -20,7 +20,7 @@ pub struct ListCheckSuites<'a> {
 #[async_trait]
 impl<'a> Action<HeadSha, Vec<CheckSuite>, ListCheckRunsError> for ListCheckSuites<'a> {
     #[tracing::instrument]
-    async fn execute(&mut self, head_sha: &HeadSha) -> Result<Vec<CheckSuite>, ListCheckRunsError> {
+    async fn execute(&self, head_sha: &HeadSha) -> Result<Vec<CheckSuite>, ListCheckRunsError> {
         let url = format!(
             "/repos/{}/{}/commits/{}/check-suites",
             self.owner.get(),

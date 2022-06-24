@@ -21,7 +21,7 @@ pub struct ListCheckRuns<'a> {
 impl<'a> Action<CheckSuiteId, Vec<CheckRun>, ListCheckRunsError> for ListCheckRuns<'a> {
     #[tracing::instrument]
     async fn execute(
-        &mut self,
+        &self,
         check_suite_id: &CheckSuiteId,
     ) -> Result<Vec<CheckRun>, ListCheckRunsError> {
         let url = format!(
