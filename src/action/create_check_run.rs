@@ -41,16 +41,16 @@ impl<'a> Action<CreateCheckRunInput, CheckRun, CreateCheckRunError> for CreateCh
 }
 
 // TODO: Pass by reference, not by value (e.g. &HeadSha)
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, new)]
 pub struct CreateCheckRunInput {
-    pub name: CheckRunName,
-    pub head_sha: HeadSha,
+    name: CheckRunName,
+    head_sha: HeadSha,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<CheckRunStatus>,
+    status: Option<CheckRunStatus>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub conclusion: Option<CheckRunConclusion>,
+    conclusion: Option<CheckRunConclusion>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub completed_at: Option<DateTime<Utc>>,
+    completed_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     output: Option<CheckRunOutput>,
 }
