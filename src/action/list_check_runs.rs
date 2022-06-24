@@ -22,7 +22,7 @@ impl<'a> Action<CheckSuiteId, Vec<CheckRun>, ListCheckRunsError> for ListCheckRu
     #[tracing::instrument]
     async fn execute(
         &self,
-        check_suite_id: &CheckSuiteId,
+        check_suite_id: CheckSuiteId,
     ) -> Result<Vec<CheckRun>, ListCheckRunsError> {
         let url = format!(
             "/repos/{}/{}/check-suites/{}/check-runs",
@@ -69,7 +69,7 @@ mod tests {
         let repository = RepositoryName::new("hello-world");
 
         let check_runs = ListCheckRuns::new(&github_client, &owner, &repository)
-            .execute(&CheckSuiteId::new(5))
+            .execute(CheckSuiteId::new(5))
             .await
             .unwrap();
 

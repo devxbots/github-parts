@@ -21,7 +21,7 @@ pub struct UpdateCheckRun<'a> {
 #[async_trait]
 impl<'a> Action<UpdateCheckRunInput, CheckRun, UpdateCheckRunError> for UpdateCheckRun<'a> {
     #[tracing::instrument]
-    async fn execute(&self, input: &UpdateCheckRunInput) -> Result<CheckRun, UpdateCheckRunError> {
+    async fn execute(&self, input: UpdateCheckRunInput) -> Result<CheckRun, UpdateCheckRunError> {
         let url = format!(
             "/repos/{}/{}/check-runs/{}",
             self.owner.get(),
@@ -88,7 +88,7 @@ mod tests {
         };
 
         let check_run = UpdateCheckRun::new(&github_client, &owner, &repository, check_run_id)
-            .execute(&input)
+            .execute(input)
             .await
             .unwrap();
 
