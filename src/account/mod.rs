@@ -4,9 +4,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{id, name};
 
+pub use self::bot::Bot;
 pub use self::organization::Organization;
 pub use self::user::User;
 
+mod bot;
 mod organization;
 mod user;
 
@@ -16,6 +18,7 @@ name!(Login);
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum Account {
+    Bot(Bot),
     Organization(Organization),
     User(User),
 }
@@ -23,6 +26,7 @@ pub enum Account {
 impl Account {
     pub fn login(&self) -> &Login {
         match self {
+            Account::Bot(bot) => bot.login(),
             Account::Organization(org) => org.login(),
             Account::User(user) => user.login(),
         }
