@@ -2,6 +2,7 @@ use anyhow::Context;
 use base64::decode;
 use serde::Deserialize;
 use serde_json::Value;
+use url::Url;
 
 use crate::action::get_file::{GetFileError, GetFileResult};
 
@@ -29,6 +30,7 @@ pub(super) struct FilePayload {
     path: String,
     content: String,
     sha: String,
+    html_url: Url,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize)]
@@ -63,6 +65,7 @@ impl TryFrom<GetFilePayload> for GetFileResult {
             name: payload.name,
             path: payload.path.into(),
             sha: payload.sha,
+            html_url: payload.html_url,
             content,
         })
     }
@@ -70,6 +73,8 @@ impl TryFrom<GetFilePayload> for GetFileResult {
 
 #[cfg(test)]
 mod tests {
+    use url::Url;
+
     use crate::action::get_file::GetFileResult;
 
     use super::{FileEncoding, FilePayload, GetFilePayload};
@@ -121,8 +126,9 @@ mod tests {
             size: 1012,
             name: "README.md".to_string(),
             path: "README.md".to_string(),
+            sha: "3928ebd3c7db689f5ea5b11db6bfa89b132139c3".to_string(),
+            html_url: Url::parse("https://github.com/devxbots/github-parts/blob/main/README.md").unwrap(),
             content: "IyDwn5SpIGdpdGh1Yi1wYXJ0cwoKYGdpdGh1Yi1wYXJ0c2AgaXMgYW4gb3Bp\nbmlvbmF0ZWQgaW50ZWdyYXRpb24gd2l0aCB0aGUgR2l0SHViIHBsYXRmb3Jt\nLCB1c2VkIGJ5CltERVYgeCBCT1RTXSBmb3IgaXRzIGF1dG9tYXRpb25zLiBJ\ndCBjb250YWlucyBfdHlwZXNfIGZvciB0aGUgcmVzb3VyY2VzIHByb3ZpZGVk\nCmJ5IEdpdEh1YiB0aHJvdWdoIGl0cyBBUEksIGFuZCBfYWN0aW9uc18gdGhh\ndCBjYW4gaW50ZXJhY3Qgd2l0aCB0aGUgcGxhdGZvcm0gaW4KdmFyaW91cyB3\nYXlzLgoKIyMgU3RhdHVzCgpXZSBhcmUgYWN0aXZlbHkgZGV2ZWxvcGluZyBg\nZ2l0aHViLXBhcnRzYC4gSXRzIEFQSSBhbmQgZnVuY3Rpb25hbGl0eSBhcmUg\nbm90CnN0YWJsZSBhbmQgY2FuIGNoYW5nZSBhdCBhbnkgdGltZS4gRHVyaW5n\nIHRoaXMgcGVyaW9kLCB3ZSBkb24ndCBhY2NlcHQgY29kZQpjb250cmlidXRp\nb25zIHRvIHRoZSBwcm9qZWN0LgoKIyMgTGljZW5zZQoKTGljZW5zZWQgdW5k\nZXIgZWl0aGVyIG9mCgotIEFwYWNoZSBMaWNlbnNlLCBWZXJzaW9uIDIuMCAo\nW0xJQ0VOU0UtQVBBQ0hFXShMSUNFTlNFLUFQQUNIRSkgb3IgPGh0dHA6Ly93\nd3cuYXBhY2hlLm9yZy9saWNlbnNlcy9MSUNFTlNFLTIuMD4pCi0gTUlUIGxp\nY2Vuc2UgKFtMSUNFTlNFLU1JVF0oTElDRU5TRS1NSVQpIG9yIDxodHRwOi8v\nb3BlbnNvdXJjZS5vcmcvbGljZW5zZXMvTUlUPikKCmF0IHlvdXIgb3B0aW9u\nLgoKIyMgQ29udHJpYnV0aW9uCgpVbmxlc3MgeW91IGV4cGxpY2l0bHkgc3Rh\ndGUgb3RoZXJ3aXNlLCBhbnkgY29udHJpYnV0aW9uIGludGVudGlvbmFsbHkg\nc3VibWl0dGVkCmZvciBpbmNsdXNpb24gaW4gdGhlIHdvcmsgYnkgeW91LCBh\ncyBkZWZpbmVkIGluIHRoZSBBcGFjaGUtMi4wIGxpY2Vuc2UsIHNoYWxsIGJl\nCmR1YWwgbGljZW5zZWQgYXMgYWJvdmUsIHdpdGhvdXQgYW55IGFkZGl0aW9u\nYWwgdGVybXMgb3IgY29uZGl0aW9ucy4KCltkZXYgeCBib3RzXTogaHR0cHM6\nLy9naXRodWIuY29tL2Rldnhib3RzCg==\n".to_string(),
-            sha: "3928ebd3c7db689f5ea5b11db6bfa89b132139c3".to_string()
         });
 
         let result =
