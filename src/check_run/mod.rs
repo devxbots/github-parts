@@ -20,6 +20,8 @@ mod check_run_status;
 id!(CheckRunId);
 name!(CheckRunName);
 
+// TODO: Refactor instantiation to avoid constructor with too many arguments
+#[allow(clippy::too_many_arguments)]
 #[derive(
     Clone,
     Eq,
@@ -55,6 +57,9 @@ pub struct CheckRun {
 
     #[getset(get_copy = "pub")]
     conclusion: Option<CheckRunConclusion>,
+
+    #[getset(get = "pub")]
+    html_url: String,
 }
 
 #[cfg(test)]
