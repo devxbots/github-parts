@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use derive_new::new;
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 #[derive(
     Clone,
@@ -12,7 +13,6 @@ use serde::{Deserialize, Serialize};
     PartialOrd,
     Hash,
     Debug,
-    Default,
     Deserialize,
     Serialize,
     CopyGetters,
@@ -34,6 +34,9 @@ pub struct GetFileResult {
 
     #[getset(get = "pub")]
     pub(super) sha: String,
+
+    #[getset(get = "pub")]
+    pub(super) html_url: Url,
 }
 
 #[cfg(test)]
