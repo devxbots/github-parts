@@ -1,15 +1,11 @@
 # 🔩 github-parts
 
+![Maintenance](https://img.shields.io/maintenance/no/2023)
+
 `github-parts` is an opinionated integration with the GitHub platform, used by
 [DEV x BOTS] for its automations. It contains _types_ for the resources provided
 by GitHub through its API, and _actions_ that can interact with the platform in
 various ways.
-
-## Status
-
-We are actively developing `github-parts`. Its API and functionality are not
-stable and can change at any time. During this period, we don't accept code
-contributions to the project.
 
 ## License
 
